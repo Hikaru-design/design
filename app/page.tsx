@@ -29,6 +29,7 @@ import {
   deleteCard,
 } from "@/lib/storage";
 import { Plus, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { BottomNav } from "@/components/kakeibo/BottomNav";
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -37,6 +38,7 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState("list");
 
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -131,7 +133,7 @@ export default function Home() {
             </Button>
             <Button
               size="sm"
-              className="gap-1"
+              className="hidden sm:flex gap-1"
               onClick={() => {
                 setEditTx(null);
                 setShowForm(true);
@@ -144,7 +146,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+      <main className="max-w-2xl mx-auto px-4 py-4 pb-20 sm:pb-4 space-y-4">
         {/* Month selector */}
         <div className="flex items-center justify-center gap-4">
           <Button size="icon" variant="ghost" onClick={prevMonth}>
@@ -167,8 +169,8 @@ export default function Home() {
         <SummaryCard transactions={monthlyTx} />
 
         {/* Tabs */}
-        <Tabs defaultValue="list">
-          <TabsList className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="hidden sm:flex w-full">
             <TabsTrigger value="list" className="flex-1">
               明細
             </TabsTrigger>
@@ -245,6 +247,14 @@ export default function Home() {
           </Tabs>
         </DialogContent>
       </Dialog>
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onAdd={() => {
+          setEditTx(null);
+          setShowForm(true);
+        }}
+      />
     </div>
   );
 }
