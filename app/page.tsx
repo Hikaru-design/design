@@ -49,6 +49,8 @@ export default function Home() {
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
+  const [budgetFeedbackOpen, setBudgetFeedbackOpen] = useState(false);
+  const [budgetFeedbackMessage, setBudgetFeedbackMessage] = useState<string | null>(null);
   const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
@@ -192,6 +194,8 @@ export default function Home() {
     await supabase.auth.updateUser({ data: { category_budgets: updated } });
     setCategoryBudgets(updated);
     setCategoryBudgetSaved(true);
+    setBudgetFeedbackMessage("カテゴリ別予算を追加しました");
+    setBudgetFeedbackOpen(true);
     setTimeout(() => setCategoryBudgetSaved(false), 2000);
   }
 
@@ -201,6 +205,8 @@ export default function Home() {
     await supabase.auth.updateUser({ data: { monthly_budget: amount } });
     setMonthlyBudget(amount);
     setMonthlyBudgetSaved(true);
+    setBudgetFeedbackMessage("月の総予算を追加しました");
+    setBudgetFeedbackOpen(true);
     setTimeout(() => setMonthlyBudgetSaved(false), 2000);
   }
 
@@ -451,6 +457,22 @@ export default function Home() {
               />
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+      {/* Budget feedback dialog */}
+      <Dialog open={budgetFeedbackOpen} onOpenChange={setBudgetFeedbackOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>追加しました</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {budgetFeedbackMessage ?? "予算を追加しました。"}
+          </p>
+          <div className="mt-4 flex justify-end">
+            <Button size="sm" onClick={() => setBudgetFeedbackOpen(false)}>
+              閉じる
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       <BottomNav
