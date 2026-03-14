@@ -425,6 +425,11 @@ export default function Home() {
                 >
                   {categoryBudgetSaved ? "保存しました ✓" : "カテゴリ予算を保存"}
                 </Button>
+                {categoryBudgetSaved && (
+                  <p className="mt-1 text-xs text-emerald-600 text-center sm:hidden">
+                    保存しました ✓
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   設定するとグラフタブに使用状況が表示されます。空欄は未設定として扱います。
                 </p>
