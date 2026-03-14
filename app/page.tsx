@@ -19,7 +19,7 @@ import { CardDashboard } from "@/components/kakeibo/CardDashboard";
 import { CategoryManager } from "@/components/kakeibo/CategoryManager";
 import { LoginForm } from "@/components/kakeibo/LoginForm";
 import { Transaction, Category, Card } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
   dbGetTransactions,
   dbAddTransaction,
@@ -65,6 +65,11 @@ export default function Home() {
 
   // Auth state listener
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -237,10 +242,54 @@ export default function Home() {
 
   const showMonthSelector = activeTab === "list" || activeTab === "chart";
 
+  // Show setup screen if Supabase is not configured
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div className="glass-card rounded-3xl p-8 max-w-md w-full text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <span className="text-primary text-2xl font-bold">¥</span>
+          </div>
+          <div className="space-y-2">
+            <h1 className="type-title2 text-foreground">家計簿</h1>
+            <p className="type-callout text-muted-foreground">
+              セットアップが必要です
+            </p>
+          </div>
+          <div className="bg-muted/50 rounded-2xl p-4 text-left space-y-3">
+            <p className="type-footnote text-foreground font-medium">
+              Supabaseの設定が必要です:
+            </p>
+            <ul className="type-caption1 text-muted-foreground space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">1.</span>
+                <span>設定メニュー(右上)を開く</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">2.</span>
+                <span>「Connect」からSupabaseを追加</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">3.</span>
+                <span>環境変数が自動で設定されます</span>
+              </li>
+            </ul>
+          </div>
+          <p className="type-caption2 text-muted-foreground/70">
+            データベースとユーザー認証にSupabaseを使用します
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="type-footnote text-muted-foreground">読み込み中...</p>
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="glass-card rounded-2xl p-6 flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="type-footnote text-muted-foreground">読み込み中...</p>
+        </div>
       </div>
     );
   }
