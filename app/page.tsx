@@ -53,6 +53,8 @@ export default function Home() {
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
   const [categoryBudgetInputs, setCategoryBudgetInputs] = useState<Record<string, string>>({});
+  const [categoryBudgetSaved, setCategoryBudgetSaved] = useState(false);
+  const [monthlyBudgetSaved, setMonthlyBudgetSaved] = useState(false);
 
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -189,6 +191,8 @@ export default function Home() {
     });
     await supabase.auth.updateUser({ data: { category_budgets: updated } });
     setCategoryBudgets(updated);
+    setCategoryBudgetSaved(true);
+    setTimeout(() => setCategoryBudgetSaved(false), 2000);
   }
 
   async function handleSaveMonthlyBudget() {
@@ -196,6 +200,8 @@ export default function Home() {
     const amount = budgetInput ? Number(budgetInput) : null;
     await supabase.auth.updateUser({ data: { monthly_budget: amount } });
     setMonthlyBudget(amount);
+    setMonthlyBudgetSaved(true);
+    setTimeout(() => setMonthlyBudgetSaved(false), 2000);
   }
 
   async function handleLogout() {
@@ -366,8 +372,14 @@ export default function Home() {
                     value={budgetInput}
                     onChange={(e) => setBudgetInput(e.target.value)}
                   />
-                  <Button type="button" variant="outline" onClick={handleSaveMonthlyBudget} className="shrink-0">
-                    保存
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSaveMonthlyBudget}
+                    className="shrink-0"
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    {monthlyBudgetSaved ? "保存済み ✓" : "保存"}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -405,8 +417,13 @@ export default function Home() {
                       </div>
                     ))}
                 </div>
-                <Button type="button" className="w-full" onClick={handleSaveCategoryBudgets}>
-                  カテゴリ予算を保存
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={handleSaveCategoryBudgets}
+                  style={{ touchAction: "manipulation" }}
+                >
+                  {categoryBudgetSaved ? "保存しました ✓" : "カテゴリ予算を保存"}
                 </Button>
                 <p className="text-xs text-muted-foreground">
                   設定するとグラフタブに使用状況が表示されます。空欄は未設定として扱います。
