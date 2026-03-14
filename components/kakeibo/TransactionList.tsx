@@ -65,15 +65,37 @@ export function TransactionList({
 
   return (
     <div className="space-y-4">
-      {sortedDates.map((date) => (
+      {sortedDates.map((date) => {
+        const dayExpense = grouped[date]
+          .filter((t) => t.type === "expense")
+          .reduce((sum, t) => sum + t.amount, 0);
+        const dayIncome = grouped[date]
+          .filter((t) => t.type === "income")
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        return (
         <div key={date}>
-          <p className="text-xs text-muted-foreground mb-2 font-medium">
-            {new Date(date).toLocaleDateString("ja-JP", {
-              month: "long",
-              day: "numeric",
-              weekday: "short",
-            })}
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground font-medium">
+              {new Date(date).toLocaleDateString("ja-JP", {
+                month: "long",
+                day: "numeric",
+                weekday: "short",
+              })}
+            </p>
+            <div className="flex gap-2 text-xs">
+              {dayIncome > 0 && (
+                <span className="text-emerald-600 font-medium">
+                  +¥{dayIncome.toLocaleString("ja-JP")}
+                </span>
+              )}
+              {dayExpense > 0 && (
+                <span className="text-muted-foreground font-medium">
+                  -¥{dayExpense.toLocaleString("ja-JP")}
+                </span>
+              )}
+            </div>
+          </div>
           <div className="space-y-2">
             {grouped[date].map((t) => (
               <div
@@ -161,7 +183,8 @@ export function TransactionList({
             ))}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
