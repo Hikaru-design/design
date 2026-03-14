@@ -21,8 +21,6 @@ export function TransactionList({
   onEdit,
   onDelete,
 }: TransactionListProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
   function getCategoryName(id: string) {
     return categories.find((c) => c.id === id)?.name ?? id;
   }
@@ -98,25 +96,20 @@ export function TransactionList({
               </div>
             </div>
 
-            {/* Transaction rows */}
-            <div className="space-y-1.5">
+            {/* Transaction rows (list style) */}
+            <div className="divide-y divide-border rounded-xl bg-card/40">
               {grouped[date].map((t) => {
-                const isExpanded = expandedId === t.id;
                 const categoryColor =
                   t.type === "income" ? "var(--color-income)" : getCategoryColor(t.category);
                 const cardName = getCardName(t.cardId);
                 const cardColor = getCardColor(t.cardId);
 
                 return (
-                  <div
-                    key={t.id}
-                    className="bg-card rounded-xl overflow-hidden"
-                    style={{ boxShadow: "var(--md-elevation-1)" }}
-                  >
+                  <div key={t.id} className="overflow-hidden">
                     {/* Main row */}
                     <div
-                      className="flex items-center gap-3 px-3 py-3 cursor-pointer state-layer active:scale-[0.99] transition-transform select-none"
-                      onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                      className="flex items-center gap-3 px-3 py-3 cursor-pointer state-layer active:scale-[0.99] transition-transform select-none bg-background"
+                      onClick={() => onEdit(t)}
                     >
                       {/* Category color circle */}
                       <div
@@ -153,40 +146,17 @@ export function TransactionList({
                       </div>
 
                       {/* Right: amount */}
-                      <p
-                        className={`type-headline font-semibold flex-shrink-0 ${
-                          t.type === "income" ? "text-income" : "text-foreground"
-                        }`}
-                      >
-                        {t.type === "income" ? "+" : "−"}¥{formatAmount(t.amount)}
-                      </p>
-                    </div>
-
-                    {/* Expandable edit/delete row — grid animation */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateRows: isExpanded ? "1fr" : "0fr",
-                        transition: "grid-template-rows 200ms ease",
-                      }}
-                    >
-                      <div style={{ overflow: "hidden" }}>
-                        <div className="flex justify-end gap-2 px-3 py-2 bg-muted/40 border-t border-border">
-                          <button
-                            onClick={() => { setExpandedId(null); onEdit(t); }}
-                            className="flex items-center gap-1.5 type-caption1 font-medium text-foreground state-layer px-3 py-1.5 rounded-lg bg-card border border-border"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            編集
-                          </button>
-                          <button
-                            onClick={() => { setExpandedId(null); onDelete(t.id); }}
-                            className="flex items-center gap-1.5 type-caption1 font-medium text-destructive state-layer px-3 py-1.5 rounded-lg bg-destructive/5 border border-destructive/30"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            削除
-                          </button>
-                        </div>
+                      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                        <p
+                          className={`type-headline font-semibold ${
+                            t.type === "income" ? "text-income" : "text-foreground"
+                          }`}
+                        >
+                          {t.type === "income" ? "+" : "−"}¥{formatAmount(t.amount)}
+                        </p>
+                        <span className="type-caption2 text-muted-foreground">
+                          {t.type === "income" ? "収入" : "支出"}
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -145,6 +145,14 @@ export default function Home() {
     setPreselectedCardId(undefined);
   }
 
+  async function handleDuplicate(tx: Transaction) {
+    if (!user) return;
+    await dbAddTransaction(tx, user.id);
+    setTransactions(await dbGetTransactions(user.id));
+    setEditTx(null);
+    setPreselectedCardId(undefined);
+  }
+
   function handleEdit(tx: Transaction) {
     setEditTx(tx);
     setPreselectedCardId(undefined);
@@ -385,6 +393,8 @@ export default function Home() {
         cards={cards}
         editTransaction={editTx}
         defaultCardId={preselectedCardId}
+        onDelete={handleDelete}
+        onDuplicate={handleDuplicate}
       />
 
       {/* Settings Dialog */}
