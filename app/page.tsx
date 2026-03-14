@@ -35,6 +35,8 @@ import {
 } from "@/lib/supabase-db";
 import { Plus, ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react";
 import { BottomNav } from "@/components/kakeibo/BottomNav";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -47,6 +49,8 @@ export default function Home() {
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
+  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
+  const [budgetInput, setBudgetInput] = useState<string>("");
 
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -72,8 +76,15 @@ export default function Home() {
       setTransactions([]);
       setCategories([]);
       setCards([]);
+      setMonthlyBudget(null);
+      setBudgetInput("");
       return;
     }
+    // 月予算をユーザーメタデータから読み込む
+    const budget = user.user_metadata?.monthly_budget ?? null;
+    const budgetNum = budget ? Number(budget) : null;
+    setMonthlyBudget(budgetNum);
+    setBudgetInput(budgetNum ? String(budgetNum) : "");
     (async () => {
       const [txs, cats, cds] = await Promise.all([
         dbGetTransactions(user.id),
@@ -161,6 +172,13 @@ export default function Home() {
     setCategories(await dbGetCategories(user.id));
   }
 
+  async function handleSaveMonthlyBudget() {
+    if (!user) return;
+    const amount = budgetInput ? Number(budgetInput) : null;
+    await supabase.auth.updateUser({ data: { monthly_budget: amount } });
+    setMonthlyBudget(amount);
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut();
   }
@@ -239,7 +257,7 @@ export default function Home() {
         </div>
 
         {/* Summary */}
-        <SummaryCard transactions={monthlyTx} />
+        <SummaryCard transactions={monthlyTx} monthlyBudget={monthlyBudget} />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -305,15 +323,35 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>設定</DialogTitle>
           </DialogHeader>
-          <Tabs defaultValue="cards">
+          <Tabs defaultValue="budget">
             <TabsList className="w-full">
+              <TabsTrigger value="budget" className="flex-1">
+                予算
+              </TabsTrigger>
               <TabsTrigger value="cards" className="flex-1">
-                カード管理
+                カード
               </TabsTrigger>
               <TabsTrigger value="categories" className="flex-1">
-                カテゴリ管理
+                カテゴリ
               </TabsTrigger>
             </TabsList>
+            <TabsContent value="budget" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label>月の総予算額（円）</Label>
+                <Input
+                  type="number"
+                  placeholder="例: 150000"
+                  value={budgetInput}
+                  onChange={(e) => setBudgetInput(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  設定するとサマリーに「残り予算」が表示されます。空欄で保存すると解除されます。
+                </p>
+              </div>
+              <Button className="w-full" onClick={handleSaveMonthlyBudget}>
+                保存する
+              </Button>
+            </TabsContent>
             <TabsContent value="cards" className="mt-4">
               <CardManager
                 cards={cards}
