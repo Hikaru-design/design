@@ -2,11 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Font override — !important ensures this beats any class-based specificity */
-html, body, * {
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "Noto Sans JP", sans-serif !important;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
