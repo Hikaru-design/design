@@ -23,6 +23,9 @@ export interface Card {
   name: string;
   color: string;
   isDefault: boolean;
+  closingDay?: number;   // 締め日 (1-31)
+  paymentDay?: number;   // 支払日 (1-31)
+  budgetAmount?: number; // 月予算額（円）
 }
 
 export interface MonthlySummary {

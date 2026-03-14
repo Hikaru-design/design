@@ -14,6 +14,7 @@ import { TransactionList } from "@/components/kakeibo/TransactionList";
 import { SummaryCard } from "@/components/kakeibo/SummaryCard";
 import { Charts } from "@/components/kakeibo/Charts";
 import { CardManager } from "@/components/kakeibo/CardManager";
+import { CardDashboard } from "@/components/kakeibo/CardDashboard";
 import { CategoryManager } from "@/components/kakeibo/CategoryManager";
 import { Transaction, Category, Card } from "@/lib/types";
 import {
@@ -26,6 +27,7 @@ import {
   deleteCategory,
   getCards,
   addCard,
+  updateCard,
   deleteCard,
 } from "@/lib/storage";
 import { Plus, ChevronLeft, ChevronRight, Settings } from "lucide-react";
@@ -95,6 +97,11 @@ export default function Home() {
 
   function handleAddCard(card: Card) {
     addCard(card);
+    setCards(getCards());
+  }
+
+  function handleUpdateCard(card: Card) {
+    updateCard(card);
     setCards(getCards());
   }
 
@@ -177,6 +184,9 @@ export default function Home() {
             <TabsTrigger value="chart" className="flex-1">
               グラフ
             </TabsTrigger>
+            <TabsTrigger value="cards" className="flex-1">
+              カード
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="mt-4">
@@ -194,6 +204,14 @@ export default function Home() {
               transactions={monthlyTx}
               allTransactions={transactions}
               categories={categories}
+            />
+          </TabsContent>
+
+          <TabsContent value="cards" className="mt-4">
+            <CardDashboard
+              cards={cards}
+              transactions={transactions}
+              onOpenSettings={() => setShowSettings(true)}
             />
           </TabsContent>
         </Tabs>
@@ -234,6 +252,7 @@ export default function Home() {
               <CardManager
                 cards={cards}
                 onAdd={handleAddCard}
+                onUpdate={handleUpdateCard}
                 onDelete={handleDeleteCard}
               />
             </TabsContent>

@@ -96,6 +96,15 @@ export function addCard(card: Card): void {
   saveCards(cards);
 }
 
+export function updateCard(updated: Card): void {
+  const cards = getCards();
+  const index = cards.findIndex((c) => c.id === updated.id);
+  if (index !== -1) {
+    cards[index] = updated;
+    saveCards(cards);
+  }
+}
+
 export function deleteCard(id: string): void {
   const cards = getCards().filter((c) => c.id !== id || c.isDefault);
   saveCards(cards);
