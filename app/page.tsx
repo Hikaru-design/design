@@ -212,7 +212,10 @@ export default function Home() {
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-center -mt-1 mb-1 sm:hidden" aria-hidden="true">
+            <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+          </div>
           <DialogHeader>
             <DialogTitle>設定</DialogTitle>
           </DialogHeader>

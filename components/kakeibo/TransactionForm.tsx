@@ -102,7 +102,10 @@ export function TransactionForm({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md w-full">
+      <DialogContent>
+        <div className="flex justify-center -mt-1 mb-1 sm:hidden" aria-hidden="true">
+          <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+        </div>
         <DialogHeader>
           <DialogTitle>
             {editTransaction ? "取引を編集" : "取引を追加"}
