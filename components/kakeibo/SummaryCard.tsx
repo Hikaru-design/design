@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Transaction } from "@/lib/types";
-import { TrendingUp, TrendingDown, Wallet, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, AlertTriangle, Target } from "lucide-react";
 
 interface SummaryCardProps {
   transactions: Transaction[];
@@ -38,90 +38,129 @@ export function SummaryCard({ transactions, monthlyBudget }: SummaryCardProps) {
       ? "bg-warning"
       : "bg-primary";
 
-    const amountColorClass = isOver
-      ? "text-destructive"
-      : "text-foreground";
+    const ringColor = isOver
+      ? "stroke-destructive"
+      : isWarning
+      ? "stroke-warning"
+      : "stroke-primary";
+
+    // SVG ring calculations
+    const size = 100;
+    const strokeWidth = 8;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference * (1 - usageRate / 100);
 
     return (
       <Card
-        className={`overflow-hidden transition-colors ${
-          isOver ? "border-destructive/40 bg-destructive/5" : ""
+        className={`overflow-hidden transition-all duration-300 glass-card animate-fade-in-up ${
+          isOver ? "border-destructive/40" : ""
         }`}
-        style={{ boxShadow: "var(--md-elevation-1)" }}
       >
         {/* Over-budget top banner */}
         {isOver && (
           <div className="flex items-center gap-2 px-4 py-2.5 bg-destructive/10 border-b border-destructive/20">
-            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 animate-pulse" />
             <p className="type-caption1 font-semibold text-destructive">
               予算を ¥{fmt(expense - monthlyBudget)} オーバーしています
             </p>
           </div>
         )}
 
-        <CardContent className="p-4 space-y-3">
-          {/* Hero: 今月の支出 */}
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="type-caption1 text-muted-foreground mb-1">今月の支出</p>
-              <div className="flex items-baseline gap-1">
-                <span className={`text-xl font-bold ${amountColorClass}`}>¥</span>
-                <span className={`type-large-title ${amountColorClass}`}>
-                  {fmt(expense)}
+        <CardContent className="p-5">
+          <div className="flex items-center gap-5">
+            {/* Circular progress ring */}
+            <div className="relative flex-shrink-0">
+              <svg width={size} height={size} className="transform -rotate-90">
+                {/* Background ring */}
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  fill="none"
+                  strokeWidth={strokeWidth}
+                  className="stroke-muted"
+                />
+                {/* Progress ring */}
+                <circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  fill="none"
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  className={`${ringColor} transition-all duration-700 ease-out`}
+                  style={{
+                    strokeDasharray: circumference,
+                    strokeDashoffset: offset,
+                  }}
+                />
+              </svg>
+              {/* Center content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className={`type-title3 font-bold ${isOver ? "text-destructive" : isWarning ? "text-warning" : "text-primary"}`}>
+                  {Math.round(rawRate)}%
                 </span>
+                <span className="type-caption2 text-muted-foreground">使用</span>
               </div>
             </div>
-            <div className="text-right">
-              <p className="type-caption2 text-muted-foreground">予算</p>
-              <p className="type-footnote font-semibold text-muted-foreground">
-                ¥{fmt(monthlyBudget)}
-              </p>
-            </div>
-          </div>
 
-          {/* Progress bar */}
-          <div className="space-y-1.5">
-            <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-[width] duration-700 ease-out ${barColorClass} ${
-                  isOver ? "animate-budget-shake" : ""
-                }`}
-                style={{ width: `${usageRate}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span
-                className={`type-caption1 font-medium flex items-center gap-1 ${
-                  isOver
-                    ? "text-destructive"
-                    : isWarning
-                    ? "text-warning"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {isWarning && <AlertTriangle className="h-3 w-3" />}
-                {isOver
-                  ? `予算超過`
-                  : `残り ¥${fmt(remaining)}`}
-              </span>
-              <span className="type-caption1 text-muted-foreground font-medium">
-                {Math.round(rawRate)}%
-              </span>
+            {/* Right side content */}
+            <div className="flex-1 min-w-0 space-y-3">
+              {/* Expense amount */}
+              <div>
+                <p className="type-caption1 text-muted-foreground mb-0.5">今月の支出</p>
+                <div className="flex items-baseline gap-0.5 animate-count-up">
+                  <span className={`text-lg font-bold ${isOver ? "text-destructive" : "text-foreground"}`}>¥</span>
+                  <span className={`type-title2 ${isOver ? "text-destructive" : "text-foreground"}`}>
+                    {fmt(expense)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Budget & remaining */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <Target className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="type-caption1 text-muted-foreground">
+                    予算 ¥{fmt(monthlyBudget)}
+                  </span>
+                </div>
+                <span className={`type-caption1 font-semibold ${
+                  isOver ? "text-destructive" : isWarning ? "text-warning" : "text-income"
+                }`}>
+                  {isOver ? `超過` : `残り ¥${fmt(remaining)}`}
+                </span>
+              </div>
+
+              {/* Linear progress for detail */}
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-[width] duration-700 ease-out ${barColorClass} ${
+                    isOver ? "animate-budget-shake" : ""
+                  }`}
+                  style={{ width: `${usageRate}%` }}
+                />
+              </div>
             </div>
           </div>
 
           {/* Footer: 収入 · 収支 */}
-          <div className="flex gap-4 border-t border-border pt-2.5">
+          <div className="flex gap-4 border-t border-border/50 mt-4 pt-3">
             <span className="flex items-center gap-1.5 type-caption1 text-muted-foreground">
-              <TrendingUp className="h-3.5 w-3.5 text-income" />
+              <div className="w-6 h-6 rounded-lg bg-income/15 flex items-center justify-center">
+                <TrendingUp className="h-3.5 w-3.5 text-income" />
+              </div>
               収入
-              <span className="font-medium text-income">¥{fmt(income)}</span>
+              <span className="font-semibold text-income">¥{fmt(income)}</span>
             </span>
             <span className="flex items-center gap-1.5 type-caption1 text-muted-foreground">
-              <Wallet className="h-3.5 w-3.5" />
+              <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
+                <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
               収支
               <span
-                className={`font-medium ${
+                className={`font-semibold ${
                   balance >= 0 ? "text-income" : "text-destructive"
                 }`}
               >
@@ -136,13 +175,13 @@ export function SummaryCard({ transactions, monthlyBudget }: SummaryCardProps) {
 
   // ── 通常モード（予算未設定）——
   return (
-    <Card style={{ boxShadow: "var(--md-elevation-1)" }}>
-      <CardContent className="p-4 space-y-3">
+    <Card className="glass-card animate-fade-in-up">
+      <CardContent className="p-5 space-y-4">
         {/* Hero: 収支 */}
-        <div>
+        <div className="text-center py-2">
           <p className="type-caption1 text-muted-foreground mb-1">今月の収支</p>
-          <div className="flex items-baseline gap-1">
-            <span className={`text-xl font-bold ${balance >= 0 ? "text-income" : "text-destructive"}`}>¥</span>
+          <div className="flex items-baseline justify-center gap-1 animate-count-up">
+            <span className={`text-2xl font-bold ${balance >= 0 ? "text-income" : "text-destructive"}`}>¥</span>
             <span className={`type-large-title ${balance >= 0 ? "text-income" : "text-destructive"}`}>
               {balance >= 0 ? "+" : ""}{fmt(balance)}
             </span>
@@ -150,17 +189,26 @@ export function SummaryCard({ transactions, monthlyBudget }: SummaryCardProps) {
         </div>
 
         {/* 収入 · 支出 */}
-        <div className="flex gap-6 border-t border-border pt-2.5">
-          <span className="flex items-center gap-1.5 type-callout text-muted-foreground">
-            <TrendingUp className="h-4 w-4 text-income" />
-            収入
-            <span className="font-semibold text-income">¥{fmt(income)}</span>
-          </span>
-          <span className="flex items-center gap-1.5 type-callout text-muted-foreground">
-            <TrendingDown className="h-4 w-4 text-destructive" />
-            支出
-            <span className="font-semibold text-destructive">¥{fmt(expense)}</span>
-          </span>
+        <div className="flex justify-center gap-6 border-t border-border/50 pt-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-income/15 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-income" />
+            </div>
+            <div>
+              <p className="type-caption2 text-muted-foreground">収入</p>
+              <p className="type-subheadline font-semibold text-income">¥{fmt(income)}</p>
+            </div>
+          </div>
+          <div className="w-px bg-border/50" />
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-expense/15 flex items-center justify-center">
+              <TrendingDown className="h-5 w-5 text-expense" />
+            </div>
+            <div>
+              <p className="type-caption2 text-muted-foreground">支出</p>
+              <p className="type-subheadline font-semibold text-expense">¥{fmt(expense)}</p>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -16,57 +16,54 @@ const tabs = [
 ];
 
 export function BottomNav({ activeTab, onTabChange, onAdd }: BottomNavProps) {
-  const activeIndex = tabs.findIndex((t) => t.value === activeTab);
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 sm:hidden bg-card border-t border-border pb-safe">
-      <div className="flex items-center h-16 max-w-2xl mx-auto px-1">
-        {tabs.map(({ value, label, icon: Icon }, index) => {
-          const isActive = activeTab === value;
-          return (
-            <button
-              key={value}
-              onClick={() => onTabChange(value)}
-              className="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors"
-            >
-              {/* Active indicator pill */}
-              <span
-                className={`absolute top-1/2 -translate-y-1/2 w-14 h-7 rounded-full transition-all duration-300 ${
-                  isActive ? "bg-md-primary-container" : "bg-transparent"
-                }`}
-                style={{
-                  transitionTimingFunction: "cubic-bezier(0.34,1.56,0.64,1)",
-                }}
-              />
-              <Icon
-                className={`relative h-5 w-5 transition-colors ${
-                  isActive
-                    ? "text-md-on-primary-container"
-                    : "text-muted-foreground"
-                }`}
-              />
-              <span
-                className={`relative type-caption2 font-medium transition-colors ${
-                  isActive
-                    ? "text-md-on-primary-container"
-                    : "text-muted-foreground"
-                }`}
+    <nav className="fixed bottom-4 left-4 right-4 z-20 sm:hidden">
+      <div className="glass rounded-2xl shadow-xl shadow-foreground/5 border border-border/50 mx-auto max-w-md">
+        <div className="flex items-center h-16 px-2">
+          {tabs.map(({ value, label, icon: Icon }) => {
+            const isActive = activeTab === value;
+            return (
+              <button
+                key={value}
+                onClick={() => onTabChange(value)}
+                className="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300"
               >
-                {label}
-              </span>
-            </button>
-          );
-        })}
+                {/* Active indicator pill */}
+                <span
+                  className={`absolute top-2 w-12 h-8 rounded-xl transition-all duration-300 ${
+                    isActive 
+                      ? "bg-primary/15 scale-100" 
+                      : "bg-transparent scale-75"
+                  }`}
+                />
+                <Icon
+                  className={`relative h-5 w-5 transition-all duration-300 ${
+                    isActive
+                      ? "text-primary scale-110"
+                      : "text-muted-foreground"
+                  }`}
+                />
+                <span
+                  className={`relative type-caption2 font-medium transition-all duration-300 ${
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </span>
+              </button>
+            );
+          })}
 
-        {/* FAB — Add button */}
-        <button
-          onClick={onAdd}
-          className="flex flex-col items-center justify-center flex-shrink-0 w-14 h-full state-layer"
-        >
-          <div className="flex items-center justify-center w-14 h-9 rounded-2xl bg-md-primary-container text-md-on-primary-container transition-transform active:scale-95">
-            <Plus className="h-5 w-5" />
-          </div>
-        </button>
+          {/* FAB — Add button */}
+          <button
+            onClick={onAdd}
+            className="flex-shrink-0 w-12 h-12 ml-1 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 flex items-center justify-center transition-all duration-300 active:scale-95 hover:shadow-xl hover:shadow-primary/40"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        </div>
       </div>
     </nav>
   );

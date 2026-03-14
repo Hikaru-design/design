@@ -37,15 +37,15 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded-xl px-3 py-2.5 shadow-lg text-sm">
-      {label && <p className="type-caption1 text-muted-foreground mb-1">{label}</p>}
+    <div className="glass-card rounded-xl px-4 py-3 shadow-xl text-sm">
+      {label && <p className="type-caption1 text-muted-foreground mb-1.5">{label}</p>}
       {payload.map((p, i) => (
-        <div key={i} className="flex items-center gap-2 type-footnote">
+        <div key={i} className="flex items-center gap-2.5 type-footnote py-0.5">
           {p.color && (
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
           )}
           <span className="text-muted-foreground">{p.name}</span>
-          <span className="font-semibold text-foreground ml-auto pl-4">
+          <span className="font-bold text-foreground ml-auto pl-4">
             ¥{Number(p.value).toLocaleString()}
           </span>
         </div>
@@ -109,9 +109,9 @@ export function Charts({ transactions, allTransactions, categories, categoryBudg
   return (
     <div className="space-y-4">
       {/* Pie chart */}
-      <Card style={{ boxShadow: "var(--md-elevation-1)" }}>
+      <Card className="glass-card rounded-2xl animate-fade-in-up">
         <CardHeader className="pb-2">
-          <CardTitle className="type-caption1 font-semibold text-muted-foreground uppercase tracking-wider">
+          <CardTitle className="type-footnote font-semibold text-muted-foreground uppercase tracking-wider">
             カテゴリ別支出
           </CardTitle>
         </CardHeader>
@@ -170,9 +170,9 @@ export function Charts({ transactions, allTransactions, categories, categoryBudg
       </Card>
 
       {/* Bar chart */}
-      <Card style={{ boxShadow: "var(--md-elevation-1)" }}>
+      <Card className="glass-card rounded-2xl animate-fade-in-up" style={{ animationDelay: "100ms" }}>
         <CardHeader className="pb-2">
-          <CardTitle className="type-caption1 font-semibold text-muted-foreground uppercase tracking-wider">
+          <CardTitle className="type-footnote font-semibold text-muted-foreground uppercase tracking-wider">
             月別収支（直近6ヶ月）
           </CardTitle>
         </CardHeader>
@@ -208,9 +208,9 @@ export function Charts({ transactions, allTransactions, categories, categoryBudg
 
       {/* Category budgets */}
       {budgetedCategories.length > 0 && (
-        <Card style={{ boxShadow: "var(--md-elevation-1)" }}>
+        <Card className="glass-card rounded-2xl animate-fade-in-up" style={{ animationDelay: "200ms" }}>
           <CardHeader className="pb-2">
-            <CardTitle className="type-caption1 font-semibold text-muted-foreground uppercase tracking-wider">
+            <CardTitle className="type-footnote font-semibold text-muted-foreground uppercase tracking-wider">
               カテゴリ別予算
             </CardTitle>
           </CardHeader>

@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { Transaction, Category, Card } from "@/lib/types";
-import { Pencil, Trash2 } from "lucide-react";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -19,7 +17,6 @@ export function TransactionList({
   categories,
   cards,
   onEdit,
-  onDelete,
 }: TransactionListProps) {
   function getCategoryName(id: string) {
     return categories.find((c) => c.id === id)?.name ?? id;
@@ -41,17 +38,27 @@ export function TransactionList({
   }
 
   function formatDateHeader(dateStr: string) {
-    // Parse as local date to avoid timezone shifts
     const [y, m, d] = dateStr.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     const dow = DAY_NAMES[date.getDay()];
-    return `${m}月${d}日（${dow}）`;
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    return { formatted: `${m}月${d}日`, dow, isWeekend };
   }
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-12 type-callout">
-        取引がありません
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <p className="type-callout text-muted-foreground text-center">
+          取引がありません
+        </p>
+        <p className="type-caption1 text-muted-foreground/70 text-center mt-1">
+          右下の + ボタンから追加してください
+        </p>
       </div>
     );
   }
@@ -67,7 +74,7 @@ export function TransactionList({
 
   return (
     <div className="space-y-5">
-      {sortedDates.map((date) => {
+      {sortedDates.map((date, dateIndex) => {
         const dayExpense = grouped[date]
           .filter((t) => t.type === "expense")
           .reduce((sum, t) => sum + t.amount, 0);
@@ -75,13 +82,28 @@ export function TransactionList({
           .filter((t) => t.type === "income")
           .reduce((sum, t) => sum + t.amount, 0);
 
+        const { formatted, dow, isWeekend } = formatDateHeader(date);
+
         return (
-          <div key={date}>
+          <div 
+            key={date} 
+            className="animate-fade-in-up"
+            style={{ animationDelay: `${dateIndex * 50}ms` }}
+          >
             {/* Date section header */}
             <div className="flex items-center justify-between px-1 mb-2">
-              <span className="type-subheadline text-muted-foreground font-medium">
-                {formatDateHeader(date)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="type-subheadline text-foreground font-semibold">
+                  {formatted}
+                </span>
+                <span className={`type-caption1 px-1.5 py-0.5 rounded-md font-medium ${
+                  isWeekend 
+                    ? "bg-destructive/10 text-destructive" 
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  {dow}
+                </span>
+              </div>
               <div className="flex items-center gap-3">
                 {dayIncome > 0 && (
                   <span className="type-caption1 font-semibold text-income">
@@ -96,47 +118,50 @@ export function TransactionList({
               </div>
             </div>
 
-            {/* Transaction rows (list style) */}
-            <div className="divide-y divide-border rounded-xl bg-card/40">
-              {grouped[date].map((t) => {
+            {/* Transaction rows */}
+            <div className="space-y-2">
+              {grouped[date].map((t, txIndex) => {
                 const categoryColor =
                   t.type === "income" ? "var(--color-income)" : getCategoryColor(t.category);
                 const cardName = getCardName(t.cardId);
                 const cardColor = getCardColor(t.cardId);
 
                 return (
-                  <div key={t.id} className="overflow-hidden">
-                    {/* Main row */}
+                  <div 
+                    key={t.id} 
+                    className="glass-card rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-md active:scale-[0.99]"
+                    style={{ animationDelay: `${(dateIndex * 50) + (txIndex * 30)}ms` }}
+                  >
                     <div
-                      className="flex items-center gap-3 px-3 py-3 cursor-pointer state-layer active:scale-[0.99] transition-transform select-none bg-background"
+                      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none"
                       onClick={() => onEdit(t)}
                     >
                       {/* Category color circle */}
                       <div
-                        className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center"
-                        style={{ backgroundColor: `${categoryColor}22` }}
+                        className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center transition-transform hover:scale-105"
+                        style={{ backgroundColor: `${categoryColor}18` }}
                       >
                         <div
-                          className="w-3.5 h-3.5 rounded-full"
+                          className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: categoryColor }}
                         />
                       </div>
 
                       {/* Middle: category + memo + card badge */}
                       <div className="flex-1 min-w-0">
-                        <p className="type-subheadline font-medium text-foreground truncate">
+                        <p className="type-subheadline font-semibold text-foreground truncate">
                           {getCategoryName(t.category)}
                         </p>
                         {t.memo && (
-                          <p className="type-caption1 text-muted-foreground truncate">
+                          <p className="type-caption1 text-muted-foreground truncate mt-0.5">
                             {t.memo}
                           </p>
                         )}
                         {cardName && (
                           <span
-                            className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded type-caption2 font-medium"
+                            className="inline-flex items-center mt-1 px-2 py-0.5 rounded-lg type-caption2 font-medium"
                             style={{
-                              backgroundColor: `${cardColor}22`,
+                              backgroundColor: `${cardColor}15`,
                               color: cardColor,
                             }}
                           >
@@ -148,13 +173,17 @@ export function TransactionList({
                       {/* Right: amount */}
                       <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                         <p
-                          className={`type-headline font-semibold ${
+                          className={`type-headline font-bold ${
                             t.type === "income" ? "text-income" : "text-foreground"
                           }`}
                         >
-                          {t.type === "income" ? "+" : "−"}¥{formatAmount(t.amount)}
+                          {t.type === "income" ? "+" : "-"}¥{formatAmount(t.amount)}
                         </p>
-                        <span className="type-caption2 text-muted-foreground">
+                        <span className={`type-caption2 px-1.5 py-0.5 rounded-md ${
+                          t.type === "income" 
+                            ? "bg-income/10 text-income" 
+                            : "bg-muted text-muted-foreground"
+                        }`}>
                           {t.type === "income" ? "収入" : "支出"}
                         </span>
                       </div>

@@ -104,8 +104,18 @@ export function CardDashboard({
 
   if (creditCards.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-12 type-callout">
-        カードが登録されていません
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+        <p className="type-callout text-muted-foreground text-center">
+          カードが登録されていません
+        </p>
+        <p className="type-caption1 text-muted-foreground/70 text-center mt-1">
+          設定からカードを追加してください
+        </p>
       </div>
     );
   }
@@ -137,26 +147,35 @@ export function CardDashboard({
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {sortedCards.map(({ card, risk }, sortedIndex) => {
         const hasSettings = card.closingDay != null && card.paymentDay != null;
 
         if (!hasSettings) {
           return (
-            <CardUI key={card.id} style={{ boxShadow: "var(--md-elevation-1)" }}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: card.color }}
-                  />
-                  <span className="type-subheadline font-semibold">{card.name}</span>
+            <CardUI 
+              key={card.id} 
+              className="glass-card rounded-2xl animate-fade-in-up"
+              style={{ animationDelay: `${sortedIndex * 80}ms` }}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${card.color}20` }}
+                  >
+                    <span
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: card.color }}
+                    />
+                  </div>
+                  <span className="type-headline font-semibold">{card.name}</span>
                 </div>
                 <button
                   onClick={onOpenSettings}
-                  className="flex items-center gap-1.5 type-caption1 text-muted-foreground hover:text-foreground transition-colors state-layer px-2 py-1.5 rounded-lg"
+                  className="flex items-center gap-2 type-footnote text-muted-foreground hover:text-foreground transition-all px-4 py-3 rounded-xl bg-muted/50 hover:bg-muted w-full"
                 >
-                  <Settings2 className="h-3.5 w-3.5" />
+                  <Settings2 className="h-4 w-4" />
                   締め日・支払日を設定してください
                 </button>
               </CardContent>
@@ -202,9 +221,9 @@ export function CardDashboard({
         // Card border / bg based on risk
         const cardClassName =
           risk === "danger"
-            ? "border-2 border-destructive/60 bg-destructive/5"
+            ? "border-destructive/50"
             : risk === "warning"
-            ? "border border-warning/50"
+            ? "border-warning/40"
             : "";
 
         // Show ring on highest-risk (sortedIndex === 0) and it has budget
@@ -213,8 +232,8 @@ export function CardDashboard({
         return (
           <CardUI
             key={card.id}
-            className={`overflow-hidden ${cardClassName}`}
-            style={{ boxShadow: "var(--md-elevation-1)" }}
+            className={`overflow-hidden glass-card rounded-2xl animate-fade-in-up ${cardClassName}`}
+            style={{ animationDelay: `${sortedIndex * 80}ms` }}
           >
             {/* Risk badge strip */}
             {risk === "danger" && (
@@ -242,15 +261,20 @@ export function CardDashboard({
               </div>
             )}
 
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-5 space-y-4">
               {/* Header row */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: card.color }}
-                  />
-                  <span className="type-subheadline font-semibold">{card.name}</span>
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${card.color}20` }}
+                  >
+                    <span
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: card.color }}
+                    />
+                  </div>
+                  <span className="type-headline font-semibold">{card.name}</span>
                   {isClosingSoon && (
                     <span className="flex items-center gap-0.5 type-caption2 font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded-full">
                       <Zap className="h-2.5 w-2.5" />
@@ -357,9 +381,9 @@ export function CardDashboard({
                 {onQuickAdd && (
                   <button
                     onClick={() => onQuickAdd(card.id)}
-                    className="flex items-center gap-1 type-caption1 font-medium text-primary state-layer px-2.5 py-1.5 rounded-lg border border-primary/30 bg-primary/5 transition-colors hover:bg-primary/10"
+                    className="flex items-center gap-1.5 type-footnote font-semibold text-primary px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/15 transition-all active:scale-95"
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-4 w-4" />
                     記録
                   </button>
                 )}

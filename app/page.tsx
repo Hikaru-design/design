@@ -250,41 +250,46 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen gradient-bg">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card border-b border-border" style={{ boxShadow: "var(--md-elevation-1)" }}>
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-          <h1 className="type-title2 flex-1">家計簿</h1>
+      <header className="sticky top-0 z-10 glass border-b border-border/30">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/25">
+              <span className="text-primary-foreground text-sm font-bold">¥</span>
+            </div>
+            <h1 className="type-title3 text-foreground">家計簿</h1>
+          </div>
 
           {/* Month selector — shown in header on desktop */}
           {showMonthSelector && (
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1 bg-secondary/50 rounded-xl p-1">
               <button
                 onClick={prevMonth}
-                className="h-8 w-8 flex items-center justify-center rounded-full state-layer text-foreground"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-background/80 transition-colors text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="type-subheadline font-semibold min-w-[7rem] text-center">
+              <span className="type-subheadline font-semibold min-w-[7rem] text-center px-2">
                 {selectedYear}年{selectedMonth}月
                 {isCurrentMonth && (
-                  <span className="ml-1.5 type-caption1 text-md-primary font-medium">今月</span>
+                  <span className="ml-1.5 type-caption1 text-primary font-medium">今月</span>
                 )}
               </span>
               <button
                 onClick={nextMonth}
-                className="h-8 w-8 flex items-center justify-center rounded-full state-layer text-foreground"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-background/80 transition-colors text-foreground"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           )}
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <Button
               size="icon"
               variant="ghost"
-              className="h-9 w-9"
+              className="h-9 w-9 rounded-xl hover:bg-background/80"
               onClick={handleLogout}
               title="ログアウト"
             >
@@ -292,7 +297,7 @@ export default function Home() {
             </Button>
             <Button
               size="sm"
-              className="hidden sm:flex gap-1"
+              className="hidden sm:flex gap-1.5 rounded-xl shadow-sm shadow-primary/25 hover:shadow-md hover:shadow-primary/30 transition-all"
               onClick={() => {
                 setEditTx(null);
                 setPreselectedCardId(undefined);
@@ -306,30 +311,32 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-4 pb-24 sm:pb-4 space-y-4">
+      <main className="max-w-2xl mx-auto px-4 py-4 pb-28 sm:pb-6 space-y-4">
         {/* Month selector — mobile only, below header */}
         {showMonthSelector && (
-          <div className="flex sm:hidden items-center justify-center gap-3">
-            <button
-              onClick={prevMonth}
-              className="h-9 w-9 flex items-center justify-center rounded-full state-layer"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className="text-center min-w-[8rem]">
-              <span className="type-title3">
-                {selectedYear}年{selectedMonth}月
-              </span>
-              {isCurrentMonth && (
-                <span className="ml-2 type-caption1 text-md-primary font-medium">今月</span>
-              )}
+          <div className="flex sm:hidden items-center justify-center">
+            <div className="inline-flex items-center gap-1 bg-card/80 backdrop-blur-sm rounded-2xl p-1.5 shadow-sm border border-border/30">
+              <button
+                onClick={prevMonth}
+                className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="text-center min-w-[8rem] px-2">
+                <span className="type-headline font-semibold">
+                  {selectedYear}年{selectedMonth}月
+                </span>
+                {isCurrentMonth && (
+                  <span className="ml-2 type-caption1 text-primary font-medium">今月</span>
+                )}
+              </div>
+              <button
+                onClick={nextMonth}
+                className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              onClick={nextMonth}
-              className="h-9 w-9 flex items-center justify-center rounded-full state-layer"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
         )}
 
@@ -340,10 +347,10 @@ export default function Home() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="hidden sm:flex w-full">
-            <TabsTrigger value="list" className="flex-1">明細</TabsTrigger>
-            <TabsTrigger value="chart" className="flex-1">グラフ</TabsTrigger>
-            <TabsTrigger value="cards" className="flex-1">カード</TabsTrigger>
+          <TabsList className="hidden sm:flex w-full p-1.5 bg-card/80 backdrop-blur-sm rounded-2xl border border-border/30 shadow-sm">
+            <TabsTrigger value="list" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">明細</TabsTrigger>
+            <TabsTrigger value="chart" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">グラフ</TabsTrigger>
+            <TabsTrigger value="cards" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">カード</TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="mt-4">

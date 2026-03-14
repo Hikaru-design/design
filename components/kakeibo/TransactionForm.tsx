@@ -190,14 +190,14 @@ export function TransactionForm({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* M3 Segmented control for income/expense */}
-          <div className="flex rounded-full bg-muted p-1 gap-1">
+          <div className="flex rounded-2xl bg-muted/70 p-1.5 gap-1">
             <button
               type="button"
               onClick={() => handleTypeChange("expense")}
-              className={`flex-1 py-2 rounded-full type-subheadline font-medium transition-all duration-200 ${
+              className={`flex-1 py-2.5 rounded-xl type-subheadline font-semibold transition-all duration-300 ${
                 type === "expense"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-card text-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
               }`}
             >
               支出
@@ -205,10 +205,10 @@ export function TransactionForm({
             <button
               type="button"
               onClick={() => handleTypeChange("income")}
-              className={`flex-1 py-2 rounded-full type-subheadline font-medium transition-all duration-200 ${
+              className={`flex-1 py-2.5 rounded-xl type-subheadline font-semibold transition-all duration-300 ${
                 type === "income"
-                  ? "bg-income text-white shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-income text-white shadow-md shadow-income/25"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
               }`}
             >
               収入
@@ -223,7 +223,7 @@ export function TransactionForm({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="h-11"
+              className="h-12 rounded-xl bg-muted/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
 
@@ -231,7 +231,7 @@ export function TransactionForm({
           <div className="space-y-1.5">
             <Label htmlFor="amount" className="type-subheadline font-medium">金額（円）</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 type-body font-semibold text-muted-foreground">¥</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 type-headline font-bold text-muted-foreground">¥</span>
               <Input
                 id="amount"
                 type="number"
@@ -239,7 +239,7 @@ export function TransactionForm({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min="1"
-                className="pl-7 h-11 type-body"
+                className="pl-10 h-14 rounded-xl bg-muted/50 border-border/50 text-xl font-semibold focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
             </div>
           </div>
@@ -309,11 +309,11 @@ export function TransactionForm({
             <p className="type-caption1 text-destructive flex items-center gap-1">{error}</p>
           )}
 
-          <div className="flex gap-2 justify-end pt-1">
-            <Button type="button" variant="outline" onClick={handleClose}>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button type="button" variant="outline" onClick={handleClose} className="rounded-xl px-5">
               キャンセル
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="rounded-xl px-6 shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 transition-all">
               {editTransaction ? "更新" : "追加"}
             </Button>
           </div>
