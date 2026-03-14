@@ -4,7 +4,10 @@ import "./globals.css";
 
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-sans",
-  subsets: ["latin", "japanese"],
+  // Note: this font definition is mainly for Latin text;
+  // Japanese glyphs are provided by the global CSS stack
+  // (-apple-system, Hiragino, Yu Gothic, etc.).
+  subsets: ["latin"],
   weight: ["400", "500", "700"],
   preload: true,
 });
