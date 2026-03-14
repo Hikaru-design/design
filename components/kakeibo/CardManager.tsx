@@ -112,7 +112,7 @@ export function CardManager({ cards, onAdd, onUpdate, onDelete }: CardManagerPro
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs">締め日</Label>
-            <Select value={closingDay} onValueChange={setClosingDay}>
+            <Select value={closingDay} onValueChange={(v) => setClosingDay(v ?? "")}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="設定しない" />
               </SelectTrigger>
@@ -126,7 +126,7 @@ export function CardManager({ cards, onAdd, onUpdate, onDelete }: CardManagerPro
           </div>
           <div className="space-y-1">
             <Label className="text-xs">支払日</Label>
-            <Select value={paymentDay} onValueChange={setPaymentDay}>
+            <Select value={paymentDay} onValueChange={(v) => setPaymentDay(v ?? "")}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="設定しない" />
               </SelectTrigger>
@@ -223,7 +223,7 @@ export function CardManager({ cards, onAdd, onUpdate, onDelete }: CardManagerPro
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs">締め日</Label>
-                    <Select value={editClosingDay} onValueChange={setEditClosingDay}>
+                    <Select value={editClosingDay} onValueChange={(v) => setEditClosingDay(v ?? "")}>
                       <SelectTrigger className="h-8 text-xs">
                         <SelectValue placeholder="設定しない" />
                       </SelectTrigger>
@@ -237,7 +237,7 @@ export function CardManager({ cards, onAdd, onUpdate, onDelete }: CardManagerPro
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">支払日</Label>
-                    <Select value={editPaymentDay} onValueChange={setEditPaymentDay}>
+                    <Select value={editPaymentDay} onValueChange={(v) => setEditPaymentDay(v ?? "")}>
                       <SelectTrigger className="h-8 text-xs">
                         <SelectValue placeholder="設定しない" />
                       </SelectTrigger>
