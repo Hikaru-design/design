@@ -366,7 +366,7 @@ export default function Home() {
                     value={budgetInput}
                     onChange={(e) => setBudgetInput(e.target.value)}
                   />
-                  <Button variant="outline" onClick={handleSaveMonthlyBudget} className="shrink-0">
+                  <Button type="button" variant="outline" onClick={handleSaveMonthlyBudget} className="shrink-0">
                     保存
                   </Button>
                 </div>
@@ -405,7 +405,7 @@ export default function Home() {
                       </div>
                     ))}
                 </div>
-                <Button className="w-full" onClick={handleSaveCategoryBudgets}>
+                <Button type="button" className="w-full" onClick={handleSaveCategoryBudgets}>
                   カテゴリ予算を保存
                 </Button>
                 <p className="text-xs text-muted-foreground">
