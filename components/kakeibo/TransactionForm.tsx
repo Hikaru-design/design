@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Transaction, Category, Card, TransactionType } from "@/lib/types";
 import { generateId } from "@/lib/storage";
+import { Copy, Trash2 } from "lucide-react";
 
 interface TransactionFormProps {
   open: boolean;
@@ -29,6 +30,8 @@ interface TransactionFormProps {
   cards: Card[];
   editTransaction?: Transaction | null;
   defaultCardId?: string;
+  onDelete?: (id: string) => void;
+  onDuplicate?: (transaction: Transaction) => void;
 }
 
 export function TransactionForm({
@@ -39,6 +42,8 @@ export function TransactionForm({
   cards,
   editTransaction,
   defaultCardId,
+  onDelete,
+  onDuplicate,
 }: TransactionFormProps) {
   const today = new Date().toISOString().split("T")[0];
 
@@ -101,6 +106,38 @@ export function TransactionForm({
     handleClose();
   }
 
+  function handleDuplicate() {
+    if (!editTransaction) return;
+    if (!date) return setError("日付を入力してください");
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
+      return setError("有効な金額を入力してください");
+    if (!category) return setError("カテゴリを選択してください");
+
+    const duplicated: Transaction = {
+      id: generateId(),
+      date,
+      type,
+      amount: Number(amount),
+      category,
+      cardId: cardId || null,
+      memo,
+      createdAt: editTransaction.createdAt ?? new Date().toISOString(),
+    };
+
+    if (onDuplicate) {
+      onDuplicate(duplicated);
+    } else {
+      onSave(duplicated);
+    }
+    handleClose();
+  }
+
+  function handleDeleteClick() {
+    if (!editTransaction || !onDelete) return;
+    onDelete(editTransaction.id);
+    handleClose();
+  }
+
   function handleClose() {
     setType("expense");
     setDate(today);
@@ -120,9 +157,35 @@ export function TransactionForm({
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
         <DialogHeader>
-          <DialogTitle className="type-title3">
-            {editTransaction ? "取引を編集" : "取引を追加"}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2">
+            {editTransaction ? (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleDuplicate}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive"
+                  onClick={handleDeleteClick}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <span />
+            )}
+            <DialogTitle className="type-title3 flex-1 text-right">
+              {editTransaction ? "取引を編集" : "取引を追加"}
+            </DialogTitle>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
