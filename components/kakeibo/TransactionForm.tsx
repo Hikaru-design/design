@@ -18,7 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction, Category, Card, TransactionType } from "@/lib/types";
 import { generateId } from "@/lib/storage";
 
@@ -29,6 +28,7 @@ interface TransactionFormProps {
   categories: Category[];
   cards: Card[];
   editTransaction?: Transaction | null;
+  defaultCardId?: string;
 }
 
 export function TransactionForm({
@@ -38,6 +38,7 @@ export function TransactionForm({
   categories,
   cards,
   editTransaction,
+  defaultCardId,
 }: TransactionFormProps) {
   const today = new Date().toISOString().split("T")[0];
 
@@ -49,35 +50,33 @@ export function TransactionForm({
     editTransaction ? String(editTransaction.amount) : ""
   );
   const [category, setCategory] = useState(editTransaction?.category ?? "");
-  const [cardId, setCardId] = useState(editTransaction?.cardId ?? "");
+  const [cardId, setCardId] = useState(editTransaction?.cardId ?? defaultCardId ?? "");
   const [memo, setMemo] = useState(editTransaction?.memo ?? "");
   const [error, setError] = useState("");
 
-  // ダイアログが開くたびにフォームを editTransaction の値で初期化
+  // Reset form when dialog opens
   useEffect(() => {
     if (open) {
       setType(editTransaction?.type ?? "expense");
       setDate(editTransaction?.date ?? today);
       setAmount(editTransaction ? String(editTransaction.amount) : "");
       setCategory(editTransaction?.category ?? "");
-      setCardId(editTransaction?.cardId ?? "");
+      setCardId(editTransaction?.cardId ?? defaultCardId ?? "");
       setMemo(editTransaction?.memo ?? "");
       setError("");
     }
-  }, [open, editTransaction]);
+  }, [open, editTransaction, defaultCardId]);
 
   const expenseCategories = categories.filter(
-    (c) =>
-      !["salary", "bonus", "other-income"].includes(c.id)
+    (c) => !["salary", "bonus", "other-income"].includes(c.id)
   );
   const incomeCategories = categories.filter((c) =>
     ["salary", "bonus", "other-income"].includes(c.id)
   );
-  const currentCategories =
-    type === "expense" ? expenseCategories : incomeCategories;
+  const currentCategories = type === "expense" ? expenseCategories : incomeCategories;
 
-  function handleTypeChange(val: string) {
-    setType(val as TransactionType);
+  function handleTypeChange(val: TransactionType) {
+    setType(val);
     setCategory("");
   }
 
@@ -116,52 +115,77 @@ export function TransactionForm({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
-        <div className="flex justify-center -mt-1 mb-1 sm:hidden" aria-hidden="true">
+        {/* Drag handle — mobile bottom sheet */}
+        <div className="flex justify-center -mt-1 mb-2 sm:hidden" aria-hidden="true">
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="type-title3">
             {editTransaction ? "取引を編集" : "取引を追加"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs value={type} onValueChange={handleTypeChange}>
-            <TabsList className="w-full">
-              <TabsTrigger value="expense" className="flex-1">
-                支出
-              </TabsTrigger>
-              <TabsTrigger value="income" className="flex-1">
-                収入
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
 
-          <div className="space-y-2">
-            <Label htmlFor="date">日付</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* M3 Segmented control for income/expense */}
+          <div className="flex rounded-full bg-muted p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => handleTypeChange("expense")}
+              className={`flex-1 py-2 rounded-full type-subheadline font-medium transition-all duration-200 ${
+                type === "expense"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              支出
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange("income")}
+              className={`flex-1 py-2 rounded-full type-subheadline font-medium transition-all duration-200 ${
+                type === "income"
+                  ? "bg-income text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              収入
+            </button>
+          </div>
+
+          {/* Date */}
+          <div className="space-y-1.5">
+            <Label htmlFor="date" className="type-subheadline font-medium">日付</Label>
             <Input
               id="date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              className="h-11"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">金額 (円)</Label>
-            <Input
-              id="amount"
-              type="number"
-              placeholder="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              min="1"
-            />
+          {/* Amount */}
+          <div className="space-y-1.5">
+            <Label htmlFor="amount" className="type-subheadline font-medium">金額（円）</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 type-body font-semibold text-muted-foreground">¥</span>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                min="1"
+                className="pl-7 h-11 type-body"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>カテゴリ</Label>
+          {/* Category */}
+          <div className="space-y-1.5">
+            <Label className="type-subheadline font-medium">カテゴリ</Label>
             <Select value={category} onValueChange={(v) => setCategory(v ?? "")}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="カテゴリを選択" />
               </SelectTrigger>
               <SelectContent>
@@ -169,7 +193,7 @@ export function TransactionForm({
                   <SelectItem key={c.id} value={c.id}>
                     <span className="flex items-center gap-2">
                       <span
-                        className="inline-block w-3 h-3 rounded-full"
+                        className="inline-block w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: c.color }}
                       />
                       {c.name}
@@ -180,11 +204,12 @@ export function TransactionForm({
             </Select>
           </div>
 
+          {/* Card */}
           {type === "expense" && (
-            <div className="space-y-2">
-              <Label>カード・支払方法</Label>
+            <div className="space-y-1.5">
+              <Label className="type-subheadline font-medium">カード・支払方法</Label>
               <Select value={cardId} onValueChange={(v) => setCardId(v ?? "")}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="選択してください" />
                 </SelectTrigger>
                 <SelectContent>
@@ -192,7 +217,7 @@ export function TransactionForm({
                     <SelectItem key={c.id} value={c.id}>
                       <span className="flex items-center gap-2">
                         <span
-                          className="inline-block w-3 h-3 rounded-full"
+                          className="inline-block w-3 h-3 rounded-full flex-shrink-0"
                           style={{ backgroundColor: c.color }}
                         />
                         {c.name}
@@ -204,20 +229,24 @@ export function TransactionForm({
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="memo">メモ</Label>
+          {/* Memo */}
+          <div className="space-y-1.5">
+            <Label htmlFor="memo" className="type-subheadline font-medium">メモ</Label>
             <Textarea
               id="memo"
-              placeholder="メモを入力"
+              placeholder="メモを入力（任意）"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={2}
+              className="resize-none"
             />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="type-caption1 text-destructive flex items-center gap-1">{error}</p>
+          )}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="outline" onClick={handleClose}>
               キャンセル
             </Button>

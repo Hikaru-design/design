@@ -1,8 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import { Transaction, Category, Card } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface TransactionListProps {
@@ -13,6 +12,8 @@ interface TransactionListProps {
   onDelete: (id: string) => void;
 }
 
+const DAY_NAMES = ["日", "月", "火", "水", "木", "金", "土"];
+
 export function TransactionList({
   transactions,
   categories,
@@ -20,6 +21,8 @@ export function TransactionList({
   onEdit,
   onDelete,
 }: TransactionListProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   function getCategoryName(id: string) {
     return categories.find((c) => c.id === id)?.name ?? id;
   }
@@ -35,18 +38,21 @@ export function TransactionList({
     return cards.find((c) => c.id === id)?.color ?? "#6b7280";
   }
 
-  function formatDate(date: string) {
-    const d = new Date(date);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  }
-
   function formatAmount(amount: number) {
     return amount.toLocaleString("ja-JP");
   }
 
+  function formatDateHeader(dateStr: string) {
+    // Parse as local date to avoid timezone shifts
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    const dow = DAY_NAMES[date.getDay()];
+    return `${m}月${d}日（${dow}）`;
+  }
+
   if (transactions.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-12 text-sm">
+      <div className="text-center text-muted-foreground py-12 type-callout">
         取引がありません
       </div>
     );
@@ -59,12 +65,10 @@ export function TransactionList({
     grouped[t.date].push(t);
   });
 
-  const sortedDates = Object.keys(grouped).sort((a, b) =>
-    b.localeCompare(a)
-  );
+  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {sortedDates.map((date) => {
         const dayExpense = grouped[date]
           .filter((t) => t.type === "expense")
@@ -74,115 +78,122 @@ export function TransactionList({
           .reduce((sum, t) => sum + t.amount, 0);
 
         return (
-        <div key={date}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-muted-foreground font-medium">
-              {new Date(date).toLocaleDateString("ja-JP", {
-                month: "long",
-                day: "numeric",
-                weekday: "short",
-              })}
-            </p>
-            <div className="flex gap-2 text-xs">
-              {dayIncome > 0 && (
-                <span className="text-emerald-600 font-medium">
-                  +¥{dayIncome.toLocaleString("ja-JP")}
-                </span>
-              )}
-              {dayExpense > 0 && (
-                <span className="text-muted-foreground font-medium">
-                  -¥{dayExpense.toLocaleString("ja-JP")}
-                </span>
-              )}
+          <div key={date}>
+            {/* Date section header */}
+            <div className="flex items-center justify-between px-1 mb-2">
+              <span className="type-subheadline text-muted-foreground font-medium">
+                {formatDateHeader(date)}
+              </span>
+              <div className="flex items-center gap-3">
+                {dayIncome > 0 && (
+                  <span className="type-caption1 font-semibold text-income">
+                    +¥{dayIncome.toLocaleString("ja-JP")}
+                  </span>
+                )}
+                {dayExpense > 0 && (
+                  <span className="type-caption1 font-medium text-muted-foreground">
+                    -¥{dayExpense.toLocaleString("ja-JP")}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            {grouped[date].map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
-              >
-                <div
-                  className="w-2 h-10 rounded-full flex-shrink-0"
-                  style={{
-                    backgroundColor:
-                      t.type === "income"
-                        ? "#10b981"
-                        : getCategoryColor(t.category),
-                  }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge
-                      variant="secondary"
-                      className="text-xs"
+
+            {/* Transaction rows */}
+            <div className="space-y-1.5">
+              {grouped[date].map((t) => {
+                const isExpanded = expandedId === t.id;
+                const categoryColor =
+                  t.type === "income" ? "var(--color-income)" : getCategoryColor(t.category);
+                const cardName = getCardName(t.cardId);
+                const cardColor = getCardColor(t.cardId);
+
+                return (
+                  <div
+                    key={t.id}
+                    className="bg-card rounded-xl overflow-hidden"
+                    style={{ boxShadow: "var(--md-elevation-1)" }}
+                  >
+                    {/* Main row */}
+                    <div
+                      className="flex items-center gap-3 px-3 py-3 cursor-pointer state-layer active:scale-[0.99] transition-transform select-none"
+                      onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                    >
+                      {/* Category color circle */}
+                      <div
+                        className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center"
+                        style={{ backgroundColor: `${categoryColor}22` }}
+                      >
+                        <div
+                          className="w-3.5 h-3.5 rounded-full"
+                          style={{ backgroundColor: categoryColor }}
+                        />
+                      </div>
+
+                      {/* Middle: category + memo + card badge */}
+                      <div className="flex-1 min-w-0">
+                        <p className="type-subheadline font-medium text-foreground truncate">
+                          {getCategoryName(t.category)}
+                        </p>
+                        {t.memo && (
+                          <p className="type-caption1 text-muted-foreground truncate">
+                            {t.memo}
+                          </p>
+                        )}
+                        {cardName && (
+                          <span
+                            className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded type-caption2 font-medium"
+                            style={{
+                              backgroundColor: `${cardColor}22`,
+                              color: cardColor,
+                            }}
+                          >
+                            {cardName}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Right: amount */}
+                      <p
+                        className={`type-headline font-semibold flex-shrink-0 ${
+                          t.type === "income" ? "text-income" : "text-foreground"
+                        }`}
+                      >
+                        {t.type === "income" ? "+" : "−"}¥{formatAmount(t.amount)}
+                      </p>
+                    </div>
+
+                    {/* Expandable edit/delete row — grid animation */}
+                    <div
                       style={{
-                        backgroundColor:
-                          t.type === "income"
-                            ? "#d1fae5"
-                            : `${getCategoryColor(t.category)}22`,
-                        color:
-                          t.type === "income"
-                            ? "#065f46"
-                            : getCategoryColor(t.category),
-                        borderColor: "transparent",
+                        display: "grid",
+                        gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                        transition: "grid-template-rows 200ms ease",
                       }}
                     >
-                      {getCategoryName(t.category)}
-                    </Badge>
-                    {t.cardId && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs"
-                        style={{
-                          borderColor: getCardColor(t.cardId),
-                          color: getCardColor(t.cardId),
-                        }}
-                      >
-                        {getCardName(t.cardId)}
-                      </Badge>
-                    )}
+                      <div style={{ overflow: "hidden" }}>
+                        <div className="flex justify-end gap-2 px-3 py-2 bg-muted/40 border-t border-border">
+                          <button
+                            onClick={() => { setExpandedId(null); onEdit(t); }}
+                            className="flex items-center gap-1.5 type-caption1 font-medium text-foreground state-layer px-3 py-1.5 rounded-lg bg-card border border-border"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            編集
+                          </button>
+                          <button
+                            onClick={() => { setExpandedId(null); onDelete(t.id); }}
+                            className="flex items-center gap-1.5 type-caption1 font-medium text-destructive state-layer px-3 py-1.5 rounded-lg bg-destructive/5 border border-destructive/30"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {t.memo && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {t.memo}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p
-                    className={`font-semibold text-sm ${
-                      t.type === "income"
-                        ? "text-emerald-600"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {t.type === "income" ? "+" : "-"}¥
-                    {formatAmount(t.amount)}
-                  </p>
-                </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8"
-                    onClick={() => onEdit(t)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => onDelete(t.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
-        </div>
         );
       })}
     </div>
