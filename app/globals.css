@@ -2,9 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Font override outside @layer — takes precedence over all layered styles including Tailwind preflight */
-html, body {
-  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", -apple-system, "Yu Gothic Medium", "Yu Gothic", sans-serif;
+/* Font override — !important ensures this beats any class-based specificity */
+html, body, * {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", "Noto Sans JP", sans-serif !important;
 }
 
 @custom-variant dark (&:is(.dark *));
