@@ -51,6 +51,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("list");
   const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
   const [budgetInput, setBudgetInput] = useState<string>("");
+  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
+  const [categoryBudgetInputs, setCategoryBudgetInputs] = useState<Record<string, string>>({});
 
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -78,6 +80,8 @@ export default function Home() {
       setCards([]);
       setMonthlyBudget(null);
       setBudgetInput("");
+      setCategoryBudgets({});
+      setCategoryBudgetInputs({});
       return;
     }
     // 月予算をユーザーメタデータから読み込む
@@ -85,6 +89,11 @@ export default function Home() {
     const budgetNum = budget ? Number(budget) : null;
     setMonthlyBudget(budgetNum);
     setBudgetInput(budgetNum ? String(budgetNum) : "");
+    const catBudgets: Record<string, number> = user.user_metadata?.category_budgets ?? {};
+    setCategoryBudgets(catBudgets);
+    setCategoryBudgetInputs(Object.fromEntries(
+      Object.entries(catBudgets).map(([k, v]) => [k, String(v)])
+    ));
     (async () => {
       const [txs, cats, cds] = await Promise.all([
         dbGetTransactions(user.id),
@@ -170,6 +179,16 @@ export default function Home() {
     if (!user) return;
     await dbDeleteCategory(id, user.id);
     setCategories(await dbGetCategories(user.id));
+  }
+
+  async function handleSaveCategoryBudgets() {
+    if (!user) return;
+    const updated: Record<string, number> = {};
+    Object.entries(categoryBudgetInputs).forEach(([id, val]) => {
+      if (val && Number(val) > 0) updated[id] = Number(val);
+    });
+    await supabase.auth.updateUser({ data: { category_budgets: updated } });
+    setCategoryBudgets(updated);
   }
 
   async function handleSaveMonthlyBudget() {
@@ -288,6 +307,7 @@ export default function Home() {
               transactions={monthlyTx}
               allTransactions={transactions}
               categories={categories}
+              categoryBudgets={categoryBudgets}
             />
           </TabsContent>
 
@@ -335,22 +355,63 @@ export default function Home() {
                 カテゴリ
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="budget" className="mt-4 space-y-4">
+            <TabsContent value="budget" className="mt-4 space-y-5">
+              {/* 月の総予算 */}
               <div className="space-y-2">
-                <Label>月の総予算額（円）</Label>
-                <Input
-                  type="number"
-                  placeholder="例: 150000"
-                  value={budgetInput}
-                  onChange={(e) => setBudgetInput(e.target.value)}
-                />
+                <Label className="text-sm font-medium">月の総予算額（円）</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="例: 150000"
+                    value={budgetInput}
+                    onChange={(e) => setBudgetInput(e.target.value)}
+                  />
+                  <Button variant="outline" onClick={handleSaveMonthlyBudget} className="shrink-0">
+                    保存
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  設定するとサマリーに「残り予算」が表示されます。空欄で保存すると解除されます。
+                  設定するとサマリーに「残り予算」が表示されます。
                 </p>
               </div>
-              <Button className="w-full" onClick={handleSaveMonthlyBudget}>
-                保存する
-              </Button>
+
+              {/* カテゴリ別予算 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">カテゴリ別予算（円）</Label>
+                </div>
+                <div className="space-y-2">
+                  {categories
+                    .filter((c) => !["salary", "bonus", "other-income"].includes(c.id))
+                    .map((cat) => (
+                      <div key={cat.id} className="flex items-center gap-2">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="text-sm w-20 shrink-0">{cat.name}</span>
+                        <Input
+                          type="number"
+                          placeholder="未設定"
+                          value={categoryBudgetInputs[cat.id] ?? ""}
+                          onChange={(e) =>
+                            setCategoryBudgetInputs((prev) => ({
+                              ...prev,
+                              [cat.id]: e.target.value,
+                            }))
+                          }
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    ))}
+                </div>
+                <Button className="w-full" onClick={handleSaveCategoryBudgets}>
+                  カテゴリ予算を保存
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  設定するとグラフタブに使用状況が表示されます。空欄は未設定として扱います。
+                </p>
+              </div>
             </TabsContent>
             <TabsContent value="cards" className="mt-4">
               <CardManager
