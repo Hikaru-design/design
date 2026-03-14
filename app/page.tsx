@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -16,24 +17,29 @@ import { Charts } from "@/components/kakeibo/Charts";
 import { CardManager } from "@/components/kakeibo/CardManager";
 import { CardDashboard } from "@/components/kakeibo/CardDashboard";
 import { CategoryManager } from "@/components/kakeibo/CategoryManager";
+import { LoginForm } from "@/components/kakeibo/LoginForm";
 import { Transaction, Category, Card } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 import {
-  getTransactions,
-  addTransaction,
-  updateTransaction,
-  deleteTransaction,
-  getCategories,
-  addCategory,
-  deleteCategory,
-  getCards,
-  addCard,
-  updateCard,
-  deleteCard,
-} from "@/lib/storage";
-import { Plus, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+  dbGetTransactions,
+  dbAddTransaction,
+  dbUpdateTransaction,
+  dbDeleteTransaction,
+  dbGetCategories,
+  dbAddCategory,
+  dbDeleteCategory,
+  dbGetCards,
+  dbAddCard,
+  dbUpdateCard,
+  dbDeleteCard,
+} from "@/lib/supabase-db";
+import { Plus, ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react";
 import { BottomNav } from "@/components/kakeibo/BottomNav";
 
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -46,11 +52,39 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
 
+  // Auth state listener
   useEffect(() => {
-    setTransactions(getTransactions());
-    setCategories(getCategories());
-    setCards(getCards());
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // Load data when user changes
+  useEffect(() => {
+    if (!user) {
+      setTransactions([]);
+      setCategories([]);
+      setCards([]);
+      return;
+    }
+    (async () => {
+      const [txs, cats, cds] = await Promise.all([
+        dbGetTransactions(user.id),
+        dbGetCategories(user.id),
+        dbGetCards(user.id),
+      ]);
+      setTransactions(txs);
+      setCategories(cats);
+      setCards(cds);
+    })();
+  }, [user]);
 
   const monthlyTx = transactions.filter((t) => {
     const prefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
@@ -75,13 +109,14 @@ export default function Home() {
     }
   }
 
-  function handleSave(tx: Transaction) {
+  async function handleSave(tx: Transaction) {
+    if (!user) return;
     if (editTx) {
-      updateTransaction(tx);
+      await dbUpdateTransaction(tx, user.id);
     } else {
-      addTransaction(tx);
+      await dbAddTransaction(tx, user.id);
     }
-    setTransactions(getTransactions());
+    setTransactions(await dbGetTransactions(user.id));
     setEditTx(null);
   }
 
@@ -90,38 +125,60 @@ export default function Home() {
     setShowForm(true);
   }
 
-  function handleDelete(id: string) {
-    deleteTransaction(id);
-    setTransactions(getTransactions());
+  async function handleDelete(id: string) {
+    if (!user) return;
+    await dbDeleteTransaction(id, user.id);
+    setTransactions(await dbGetTransactions(user.id));
   }
 
-  function handleAddCard(card: Card) {
-    addCard(card);
-    setCards(getCards());
+  async function handleAddCard(card: Card) {
+    if (!user) return;
+    await dbAddCard(card, user.id);
+    setCards(await dbGetCards(user.id));
   }
 
-  function handleUpdateCard(card: Card) {
-    updateCard(card);
-    setCards(getCards());
+  async function handleUpdateCard(card: Card) {
+    if (!user) return;
+    await dbUpdateCard(card, user.id);
+    setCards(await dbGetCards(user.id));
   }
 
-  function handleDeleteCard(id: string) {
-    deleteCard(id);
-    setCards(getCards());
+  async function handleDeleteCard(id: string) {
+    if (!user) return;
+    await dbDeleteCard(id, user.id);
+    setCards(await dbGetCards(user.id));
   }
 
-  function handleAddCategory(category: Category) {
-    addCategory(category);
-    setCategories(getCategories());
+  async function handleAddCategory(category: Category) {
+    if (!user) return;
+    await dbAddCategory(category, user.id);
+    setCategories(await dbGetCategories(user.id));
   }
 
-  function handleDeleteCategory(id: string) {
-    deleteCategory(id);
-    setCategories(getCategories());
+  async function handleDeleteCategory(id: string) {
+    if (!user) return;
+    await dbDeleteCategory(id, user.id);
+    setCategories(await dbGetCategories(user.id));
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
   }
 
   const isCurrentMonth =
     selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginForm />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,6 +194,15 @@ export default function Home() {
               onClick={() => setShowSettings(true)}
             >
               <Settings className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9"
+              onClick={handleLogout}
+              title="ログアウト"
+            >
+              <LogOut className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
