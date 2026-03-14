@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,19 @@ export function TransactionForm({
   const [cardId, setCardId] = useState(editTransaction?.cardId ?? "");
   const [memo, setMemo] = useState(editTransaction?.memo ?? "");
   const [error, setError] = useState("");
+
+  // ダイアログが開くたびにフォームを editTransaction の値で初期化
+  useEffect(() => {
+    if (open) {
+      setType(editTransaction?.type ?? "expense");
+      setDate(editTransaction?.date ?? today);
+      setAmount(editTransaction ? String(editTransaction.amount) : "");
+      setCategory(editTransaction?.category ?? "");
+      setCardId(editTransaction?.cardId ?? "");
+      setMemo(editTransaction?.memo ?? "");
+      setError("");
+    }
+  }, [open, editTransaction]);
 
   const expenseCategories = categories.filter(
     (c) =>
