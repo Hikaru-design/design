@@ -124,6 +124,6 @@
     @apply bg-background text-foreground;
   }
   html {
-    font-family: var(--font-sans), "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", sans-serif;
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium", "Yu Gothic", sans-serif;
   }
 }
