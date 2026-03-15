@@ -48,7 +48,6 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [preselectedCardId, setPreselectedCardId] = useState<string | undefined>(undefined);
-  const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
   const [budgetFeedbackOpen, setBudgetFeedbackOpen] = useState(false);
   const [budgetFeedbackMessage, setBudgetFeedbackMessage] = useState<string | null>(null);
@@ -225,11 +224,7 @@ export default function Home() {
   }
 
   function handleTabChange(tab: string) {
-    if (tab === "settings") {
-      setShowSettings(true);
-    } else {
-      setActiveTab(tab);
-    }
+    setActiveTab(tab);
   }
 
   const isCurrentMonth =
@@ -281,15 +276,6 @@ export default function Home() {
           )}
 
           <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-9 w-9"
-              onClick={handleLogout}
-              title="ログアウト"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
             <Button
               size="sm"
               className="hidden sm:flex gap-1"
@@ -344,6 +330,7 @@ export default function Home() {
             <TabsTrigger value="list" className="flex-1">明細</TabsTrigger>
             <TabsTrigger value="chart" className="flex-1">グラフ</TabsTrigger>
             <TabsTrigger value="cards" className="flex-1">カード</TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1">設定</TabsTrigger>
           </TabsList>
 
           <TabsContent value="list" className="mt-4">
@@ -369,13 +356,118 @@ export default function Home() {
             <CardDashboard
               cards={cards}
               transactions={transactions}
-              onOpenSettings={() => setShowSettings(true)}
+              onOpenSettings={() => setActiveTab("settings")}
               onQuickAdd={(cardId) => {
                 setEditTx(null);
                 setPreselectedCardId(cardId);
                 setShowForm(true);
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-4">
+            <Tabs defaultValue="budget">
+              <TabsList className="w-full">
+                <TabsTrigger value="budget" className="flex-1">予算</TabsTrigger>
+                <TabsTrigger value="cards" className="flex-1">カード</TabsTrigger>
+                <TabsTrigger value="categories" className="flex-1">カテゴリ</TabsTrigger>
+              </TabsList>
+              <TabsContent value="budget" className="mt-4 space-y-5">
+                {/* 月の総予算 */}
+                <div className="space-y-2">
+                  <Label className="type-subheadline font-medium">月の総予算額（円）</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="例: 150000"
+                      value={budgetInput}
+                      onChange={(e) => setBudgetInput(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSaveMonthlyBudget}
+                      className="shrink-0"
+                      style={{ touchAction: "manipulation" }}
+                    >
+                      {monthlyBudgetSaved ? "保存済み ✓" : "保存"}
+                    </Button>
+                  </div>
+                  <p className="type-caption1 text-muted-foreground">
+                    設定するとサマリーに「残り予算」が表示されます。
+                  </p>
+                </div>
+
+                {/* カテゴリ別予算 */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="type-subheadline font-medium">カテゴリ別予算（円）</Label>
+                  </div>
+                  <div className="space-y-2">
+                    {categories
+                      .filter((c) => !["salary", "bonus", "other-income"].includes(c.id))
+                      .map((cat) => (
+                        <div key={cat.id} className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="type-footnote w-20 shrink-0">{cat.name}</span>
+                          <Input
+                            type="number"
+                            placeholder="未設定"
+                            value={categoryBudgetInputs[cat.id] ?? ""}
+                            onChange={(e) =>
+                              setCategoryBudgetInputs((prev) => ({
+                                ...prev,
+                                [cat.id]: e.target.value,
+                              }))
+                            }
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={handleSaveCategoryBudgets}
+                    style={{ touchAction: "manipulation" }}
+                  >
+                    {categoryBudgetSaved ? "保存しました ✓" : "カテゴリ予算を保存"}
+                  </Button>
+                  <p className="type-caption1 text-muted-foreground">
+                    設定するとグラフタブに使用状況が表示されます。
+                  </p>
+                </div>
+              </TabsContent>
+              <TabsContent value="cards" className="mt-4">
+                <CardManager
+                  cards={cards}
+                  onAdd={handleAddCard}
+                  onUpdate={handleUpdateCard}
+                  onDelete={handleDeleteCard}
+                />
+              </TabsContent>
+              <TabsContent value="categories" className="mt-4">
+                <CategoryManager
+                  categories={categories}
+                  onAdd={handleAddCategory}
+                  onDelete={handleDeleteCategory}
+                />
+              </TabsContent>
+            </Tabs>
+
+            {/* ログアウト */}
+            <div className="mt-8 pt-4 border-t border-border">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 type-callout text-destructive state-layer w-full rounded-xl px-3 py-3"
+              >
+                <LogOut className="h-4 w-4" />
+                ログアウト
+              </button>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
@@ -397,119 +489,6 @@ export default function Home() {
         onDuplicate={handleDuplicate}
       />
 
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <div className="flex justify-center -mt-1 mb-1 sm:hidden" aria-hidden="true">
-            <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-          </div>
-          <DialogHeader>
-            <DialogTitle>設定</DialogTitle>
-          </DialogHeader>
-          <Tabs defaultValue="budget">
-            <TabsList className="w-full">
-              <TabsTrigger value="budget" className="flex-1">予算</TabsTrigger>
-              <TabsTrigger value="cards" className="flex-1">カード</TabsTrigger>
-              <TabsTrigger value="categories" className="flex-1">カテゴリ</TabsTrigger>
-            </TabsList>
-            <TabsContent value="budget" className="mt-4 space-y-5">
-              {/* 月の総予算 */}
-              <div className="space-y-2">
-                <Label className="type-subheadline font-medium">月の総予算額（円）</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="例: 150000"
-                    value={budgetInput}
-                    onChange={(e) => setBudgetInput(e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleSaveMonthlyBudget}
-                    className="shrink-0"
-                    style={{ touchAction: "manipulation" }}
-                  >
-                    {monthlyBudgetSaved ? "保存済み ✓" : "保存"}
-                  </Button>
-                </div>
-                <p className="type-caption1 text-muted-foreground">
-                  設定するとサマリーに「残り予算」が表示されます。
-                </p>
-              </div>
-
-              {/* カテゴリ別予算 */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="type-subheadline font-medium">カテゴリ別予算（円）</Label>
-                </div>
-                <div className="space-y-2">
-                  {categories
-                    .filter((c) => !["salary", "bonus", "other-income"].includes(c.id))
-                    .map((cat) => (
-                      <div key={cat.id} className="flex items-center gap-2">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <span className="type-footnote w-20 shrink-0">{cat.name}</span>
-                        <Input
-                          type="number"
-                          placeholder="未設定"
-                          value={categoryBudgetInputs[cat.id] ?? ""}
-                          onChange={(e) =>
-                            setCategoryBudgetInputs((prev) => ({
-                              ...prev,
-                              [cat.id]: e.target.value,
-                            }))
-                          }
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                    ))}
-                </div>
-                <Button
-                  type="button"
-                  className="w-full"
-                  onClick={handleSaveCategoryBudgets}
-                  style={{ touchAction: "manipulation" }}
-                >
-                  {categoryBudgetSaved ? "保存しました ✓" : "カテゴリ予算を保存"}
-                </Button>
-                <p className="type-caption1 text-muted-foreground">
-                  設定するとグラフタブに使用状況が表示されます。
-                </p>
-              </div>
-
-              {/* Logout in settings */}
-              <div className="pt-2 border-t border-border">
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 type-callout text-destructive state-layer w-full rounded-lg px-3 py-2.5"
-                >
-                  <LogOut className="h-4 w-4" />
-                  ログアウト
-                </button>
-              </div>
-            </TabsContent>
-            <TabsContent value="cards" className="mt-4">
-              <CardManager
-                cards={cards}
-                onAdd={handleAddCard}
-                onUpdate={handleUpdateCard}
-                onDelete={handleDeleteCard}
-              />
-            </TabsContent>
-            <TabsContent value="categories" className="mt-4">
-              <CategoryManager
-                categories={categories}
-                onAdd={handleAddCategory}
-                onDelete={handleDeleteCategory}
-              />
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
 
       {/* Budget feedback dialog */}
       <Dialog open={budgetFeedbackOpen} onOpenChange={setBudgetFeedbackOpen}>
