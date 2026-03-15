@@ -104,7 +104,8 @@ ${DEFAULT_CATEGORY_LIST}
       return NextResponse.json({ error: "画像から取引情報を読み取れませんでした" }, { status: 422 });
     }
     rawText = content.text;
-  } catch {
+  } catch (err) {
+    console.error("[extract-transaction] Anthropic API error:", err);
     return NextResponse.json({ error: "読み取りサービスが一時的に利用できません" }, { status: 502 });
   }
 
