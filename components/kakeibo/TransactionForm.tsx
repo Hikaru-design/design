@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Transaction, Category, Card, TransactionType } from "@/lib/types";
+import { Transaction, Category, Card, TransactionType, ExtractedTransaction } from "@/lib/types";
 import { generateId } from "@/lib/storage";
-import { Copy, Trash2 } from "lucide-react";
+import { Camera, Copy, Loader2, Trash2 } from "lucide-react";
 
 interface TransactionFormProps {
   open: boolean;
@@ -58,6 +58,9 @@ export function TransactionForm({
   const [cardId, setCardId] = useState(editTransaction?.cardId ?? defaultCardId ?? "");
   const [memo, setMemo] = useState(editTransaction?.memo ?? "");
   const [error, setError] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -69,6 +72,8 @@ export function TransactionForm({
       setCardId(editTransaction?.cardId ?? defaultCardId ?? "");
       setMemo(editTransaction?.memo ?? "");
       setError("");
+      setIsExtracting(false);
+      setExtractError(null);
     }
   }, [open, editTransaction, defaultCardId]);
 
@@ -79,6 +84,43 @@ export function TransactionForm({
     ["salary", "bonus", "other-income"].includes(c.id)
   );
   const currentCategories = type === "expense" ? expenseCategories : incomeCategories;
+
+  function applyExtractedData(data: ExtractedTransaction) {
+    if (data.type) setType(data.type);
+    if (data.date) setDate(data.date);
+    if (data.amount !== null && data.amount !== undefined) setAmount(String(data.amount));
+    const validCategory = categories.some((c) => c.id === data.category) ? data.category : "";
+    setCategory(validCategory);
+    if (data.memo) setMemo(data.memo);
+  }
+
+  async function handleImageExtract(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    setIsExtracting(true);
+    setExtractError(null);
+
+    try {
+      const body = new FormData();
+      body.append("image", file);
+
+      const res = await fetch("/api/extract-transaction", { method: "POST", body });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setExtractError(data.error ?? "画像の読み取りに失敗しました");
+        return;
+      }
+
+      applyExtractedData(data as ExtractedTransaction);
+    } catch {
+      setExtractError("ネットワークエラーが発生しました");
+    } finally {
+      setIsExtracting(false);
+    }
+  }
 
   function handleTypeChange(val: TransactionType) {
     setType(val);
@@ -146,6 +188,8 @@ export function TransactionForm({
     setCardId("");
     setMemo("");
     setError("");
+    setIsExtracting(false);
+    setExtractError(null);
     onClose();
   }
 
@@ -213,6 +257,40 @@ export function TransactionForm({
             >
               収入
             </button>
+          </div>
+
+          {/* Image scan */}
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full h-10 gap-2 text-muted-foreground"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isExtracting}
+            >
+              {isExtracting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  読み取り中...
+                </>
+              ) : (
+                <>
+                  <Camera className="h-3.5 w-3.5" />
+                  画像から読み取る
+                </>
+              )}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleImageExtract}
+            />
+            {extractError && (
+              <p className="type-caption1 text-destructive mt-1">{extractError}</p>
+            )}
           </div>
 
           {/* Date */}

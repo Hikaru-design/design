@@ -35,3 +35,11 @@ export interface MonthlySummary {
   expense: number;
   balance: number;
 }
+
+export interface ExtractedTransaction {
+  type: TransactionType;
+  date: string;
+  amount: number | null;
+  category: string;
+  memo: string;
+}
