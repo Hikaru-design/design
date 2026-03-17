@@ -61,10 +61,15 @@ export function TransactionForm({
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Fix①: stale closure 対策 — 非同期処理中でも常に最新の categories を参照する
+  const categoriesRef = useRef(categories);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  // Fix②: 抽出中に useEffect がフォームをリセットしないよう保護するフラグ
+  const isExtractingRef = useRef(false);
 
-  // Reset form when dialog opens
+  // Reset form when dialog opens (抽出中はスキップ)
   useEffect(() => {
-    if (open) {
+    if (open && !isExtractingRef.current) {
       setType(editTransaction?.type ?? "expense");
       setDate(editTransaction?.date ?? today);
       setAmount(editTransaction ? String(editTransaction.amount) : "");
@@ -72,7 +77,6 @@ export function TransactionForm({
       setCardId(editTransaction?.cardId ?? defaultCardId ?? "");
       setMemo(editTransaction?.memo ?? "");
       setError("");
-      setIsExtracting(false);
       setExtractError(null);
     }
   }, [open, editTransaction, defaultCardId]);
@@ -86,10 +90,12 @@ export function TransactionForm({
   const currentCategories = type === "expense" ? expenseCategories : incomeCategories;
 
   function applyExtractedData(data: ExtractedTransaction) {
+    // Fix①: categoriesRef.current で常に最新リストを参照（stale closure を回避）
+    const latestCategories = categoriesRef.current;
     if (data.type) setType(data.type);
     if (data.date) setDate(data.date);
     if (data.amount !== null && data.amount !== undefined) setAmount(String(data.amount));
-    const validCategory = categories.some((c) => c.id === data.category) ? data.category : "";
+    const validCategory = latestCategories.some((c) => c.id === data.category) ? data.category : "";
     setCategory(validCategory);
     if (data.memo) setMemo(data.memo);
   }
@@ -99,6 +105,8 @@ export function TransactionForm({
     if (!file) return;
     e.target.value = "";
 
+    // Fix②: useEffect によるリセットをブロックするフラグを立てる
+    isExtractingRef.current = true;
     setIsExtracting(true);
     setExtractError(null);
 
@@ -118,6 +126,8 @@ export function TransactionForm({
     } catch {
       setExtractError("ネットワークエラーが発生しました");
     } finally {
+      // Fix②: フラグを解除してから state を更新
+      isExtractingRef.current = false;
       setIsExtracting(false);
     }
   }
