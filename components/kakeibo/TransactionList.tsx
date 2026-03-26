@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Transaction, Category, Card } from "@/lib/types";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -107,8 +106,9 @@ export function TransactionList({
                 return (
                   <div key={t.id} className="overflow-hidden">
                     {/* Main row */}
+                    <div className="flex items-center bg-background">
                     <div
-                      className="flex items-center gap-3 px-3 py-3 cursor-pointer state-layer active:scale-[0.99] transition-transform select-none bg-background"
+                      className="flex items-center gap-3 px-3 py-3 cursor-pointer state-layer active:scale-[0.99] transition-transform select-none flex-1"
                       onClick={() => onEdit(t)}
                     >
                       {/* Category color circle */}
@@ -158,6 +158,15 @@ export function TransactionList({
                           {t.type === "income" ? "収入" : "支出"}
                         </span>
                       </div>
+                    </div>
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
+                      className="px-3 self-stretch flex items-center text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                      aria-label="削除"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                     </div>
                   </div>
                 );
