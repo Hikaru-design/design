@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wallet } from "lucide-react";
 
-export function LoginForm() {
+interface LoginFormProps {
+  onGuestMode?: () => void;
+}
+
+export function LoginForm({ onGuestMode }: LoginFormProps) {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -190,6 +194,27 @@ export function LoginForm() {
                 : (tab === "login" ? "ログイン" : "アカウント作成")}
             </button>
           </form>
+
+          {onGuestMode && (
+            <>
+              <div className="flex items-center gap-3 mt-5">
+                <div className="flex-1 h-px" style={{ background: "oklch(0.85 0.01 168)" }} />
+                <span className="type-caption1" style={{ color: "oklch(0.60 0.04 168)" }}>または</span>
+                <div className="flex-1 h-px" style={{ background: "oklch(0.85 0.01 168)" }} />
+              </div>
+              <button
+                type="button"
+                onClick={onGuestMode}
+                className="w-full h-11 rounded-2xl type-callout font-medium mt-3 transition-all duration-200 active:scale-95"
+                style={{
+                  background: "oklch(0.94 0.01 168)",
+                  color: "oklch(0.44 0.10 168)",
+                }}
+              >
+                登録なしでゲストとして試す
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

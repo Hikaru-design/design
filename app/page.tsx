@@ -33,14 +33,31 @@ import {
   dbUpdateCard,
   dbDeleteCard,
 } from "@/lib/supabase-db";
-import { Plus, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import {
+  getTransactions as localGetTransactions,
+  addTransaction as localAddTransaction,
+  updateTransaction as localUpdateTransaction,
+  deleteTransaction as localDeleteTransaction,
+  getCategories as localGetCategories,
+  addCategory as localAddCategory,
+  deleteCategory as localDeleteCategory,
+  getCards as localGetCards,
+  addCard as localAddCard,
+  updateCard as localUpdateCard,
+  deleteCard as localDeleteCard,
+} from "@/lib/storage";
+import { Plus, ChevronLeft, ChevronRight, LogOut, UserPlus } from "lucide-react";
 import { BottomNav } from "@/components/kakeibo/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const GUEST_MONTHLY_BUDGET_KEY = "kakeibo_guest_monthly_budget";
+const GUEST_CATEGORY_BUDGETS_KEY = "kakeibo_guest_category_budgets";
+
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,6 +84,8 @@ export default function Home() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthLoading(false);
+    }).catch(() => {
+      setAuthLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -76,8 +95,29 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load data when user changes
+  // Load data when user changes or guest mode activates
   useEffect(() => {
+    if (isGuest) {
+      setTransactions(localGetTransactions());
+      setCategories(localGetCategories());
+      setCards(localGetCards());
+      const savedBudget = typeof window !== "undefined"
+        ? localStorage.getItem(GUEST_MONTHLY_BUDGET_KEY)
+        : null;
+      const budgetNum = savedBudget ? Number(savedBudget) : null;
+      setMonthlyBudget(budgetNum);
+      setBudgetInput(budgetNum ? String(budgetNum) : "");
+      const savedCatBudgets = typeof window !== "undefined"
+        ? localStorage.getItem(GUEST_CATEGORY_BUDGETS_KEY)
+        : null;
+      const catBudgets: Record<string, number> = savedCatBudgets ? JSON.parse(savedCatBudgets) : {};
+      setCategoryBudgets(catBudgets);
+      setCategoryBudgetInputs(Object.fromEntries(
+        Object.entries(catBudgets).map(([k, v]) => [k, String(v)])
+      ));
+      return;
+    }
+
     if (!user) {
       setTransactions([]);
       setCategories([]);
@@ -88,6 +128,7 @@ export default function Home() {
       setCategoryBudgetInputs({});
       return;
     }
+
     const budget = user.user_metadata?.monthly_budget ?? null;
     const budgetNum = budget ? Number(budget) : null;
     setMonthlyBudget(budgetNum);
@@ -107,7 +148,7 @@ export default function Home() {
       setCategories(cats);
       setCards(cds);
     })();
-  }, [user]);
+  }, [user, isGuest]);
 
   const monthlyTx = transactions.filter((t) => {
     const prefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
@@ -133,6 +174,14 @@ export default function Home() {
   }
 
   async function handleSave(tx: Transaction) {
+    if (isGuest) {
+      if (editTx) localUpdateTransaction(tx);
+      else localAddTransaction(tx);
+      setTransactions(localGetTransactions());
+      setEditTx(null);
+      setPreselectedCardId(undefined);
+      return;
+    }
     if (!user) return;
     if (editTx) {
       await dbUpdateTransaction(tx, user.id);
@@ -145,6 +194,13 @@ export default function Home() {
   }
 
   async function handleDuplicate(tx: Transaction) {
+    if (isGuest) {
+      localAddTransaction(tx);
+      setTransactions(localGetTransactions());
+      setEditTx(null);
+      setPreselectedCardId(undefined);
+      return;
+    }
     if (!user) return;
     await dbAddTransaction(tx, user.id);
     setTransactions(await dbGetTransactions(user.id));
@@ -159,47 +215,88 @@ export default function Home() {
   }
 
   async function handleDelete(id: string) {
+    if (isGuest) {
+      localDeleteTransaction(id);
+      setTransactions(localGetTransactions());
+      return;
+    }
     if (!user) return;
     await dbDeleteTransaction(id, user.id);
     setTransactions(await dbGetTransactions(user.id));
   }
 
   async function handleAddCard(card: Card) {
+    if (isGuest) {
+      localAddCard(card);
+      setCards(localGetCards());
+      return;
+    }
     if (!user) return;
     await dbAddCard(card, user.id);
     setCards(await dbGetCards(user.id));
   }
 
   async function handleUpdateCard(card: Card) {
+    if (isGuest) {
+      localUpdateCard(card);
+      setCards(localGetCards());
+      return;
+    }
     if (!user) return;
     await dbUpdateCard(card, user.id);
     setCards(await dbGetCards(user.id));
   }
 
   async function handleDeleteCard(id: string) {
+    if (isGuest) {
+      localDeleteCard(id);
+      setCards(localGetCards());
+      return;
+    }
     if (!user) return;
     await dbDeleteCard(id, user.id);
     setCards(await dbGetCards(user.id));
   }
 
   async function handleAddCategory(category: Category) {
+    if (isGuest) {
+      localAddCategory(category);
+      setCategories(localGetCategories());
+      return;
+    }
     if (!user) return;
     await dbAddCategory(category, user.id);
     setCategories(await dbGetCategories(user.id));
   }
 
   async function handleDeleteCategory(id: string) {
+    if (isGuest) {
+      localDeleteCategory(id);
+      setCategories(localGetCategories());
+      return;
+    }
     if (!user) return;
     await dbDeleteCategory(id, user.id);
     setCategories(await dbGetCategories(user.id));
   }
 
   async function handleSaveCategoryBudgets() {
-    if (!user) return;
     const updated: Record<string, number> = {};
     Object.entries(categoryBudgetInputs).forEach(([id, val]) => {
       if (val && Number(val) > 0) updated[id] = Number(val);
     });
+
+    if (isGuest) {
+      localStorage.setItem(GUEST_CATEGORY_BUDGETS_KEY, JSON.stringify(updated));
+      setCategoryBudgets(updated);
+      setCategoryBudgetSaved(true);
+      setBudgetFeedbackMessage("カテゴリ別予算を追加しました");
+      setBudgetFeedbackOpen(true);
+      setTimeout(() => setCategoryBudgetSaved(false), 2000);
+      return;
+    }
+
+    if (!user) return;
     await supabase.auth.updateUser({ data: { category_budgets: updated } });
     setCategoryBudgets(updated);
     setCategoryBudgetSaved(true);
@@ -209,8 +306,23 @@ export default function Home() {
   }
 
   async function handleSaveMonthlyBudget() {
-    if (!user) return;
     const amount = budgetInput ? Number(budgetInput) : null;
+
+    if (isGuest) {
+      if (amount) {
+        localStorage.setItem(GUEST_MONTHLY_BUDGET_KEY, String(amount));
+      } else {
+        localStorage.removeItem(GUEST_MONTHLY_BUDGET_KEY);
+      }
+      setMonthlyBudget(amount);
+      setMonthlyBudgetSaved(true);
+      setBudgetFeedbackMessage("月の総予算を追加しました");
+      setBudgetFeedbackOpen(true);
+      setTimeout(() => setMonthlyBudgetSaved(false), 2000);
+      return;
+    }
+
+    if (!user) return;
     await supabase.auth.updateUser({ data: { monthly_budget: amount } });
     setMonthlyBudget(amount);
     setMonthlyBudgetSaved(true);
@@ -220,6 +332,10 @@ export default function Home() {
   }
 
   async function handleLogout() {
+    if (isGuest) {
+      setIsGuest(false);
+      return;
+    }
     await supabase.auth.signOut();
   }
 
@@ -240,8 +356,8 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return <LoginForm />;
+  if (!user && !isGuest) {
+    return <LoginForm onGuestMode={() => setIsGuest(true)} />;
   }
 
   return (
@@ -458,15 +574,39 @@ export default function Home() {
               </TabsContent>
             </Tabs>
 
-            {/* ログアウト */}
-            <div className="mt-8 pt-4 border-t border-border">
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 type-callout text-destructive state-layer w-full rounded-xl px-3 py-3"
-              >
-                <LogOut className="h-4 w-4" />
-                ログアウト
-              </button>
+            {/* ログアウト / ゲストモード */}
+            <div className="mt-8 pt-4 border-t border-border space-y-2">
+              {isGuest ? (
+                <>
+                  <div className="rounded-xl px-3 py-3 bg-muted/50">
+                    <p className="type-caption1 text-muted-foreground">
+                      ゲストモード中 — データはこのデバイスにのみ保存されます
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsGuest(false)}
+                    className="flex items-center gap-2 type-callout text-md-primary state-layer w-full rounded-xl px-3 py-3"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    アカウントを作成してデータを保存する
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 type-callout text-muted-foreground state-layer w-full rounded-xl px-3 py-3"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    ゲストモードを終了
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 type-callout text-destructive state-layer w-full rounded-xl px-3 py-3"
+                >
+                  <LogOut className="h-4 w-4" />
+                  ログアウト
+                </button>
+              )}
             </div>
           </TabsContent>
         </Tabs>
