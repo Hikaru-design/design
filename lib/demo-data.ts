@@ -1,4 +1,13 @@
-import { Transaction } from "./types";
+import { Transaction, Card } from "./types";
+
+export function generateDemoCards(): Card[] {
+  return [
+    { id: "rakuten", name: "楽天カード",    color: "#e00000", isDefault: true, closingDay: 27, paymentDay: 27, budgetAmount: 80000 },
+    { id: "amazon",  name: "Amazonカード",  color: "#ff9900", isDefault: true, closingDay: 10, paymentDay: 4,  budgetAmount: 30000 },
+    { id: "view",    name: "ビューカード",  color: "#1a56db", isDefault: true, closingDay: 15, paymentDay: 26, budgetAmount: 20000 },
+    { id: "cash",    name: "現金",          color: "#10b981", isDefault: true,                                 budgetAmount: 50000 },
+  ];
+}
 
 function d(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
