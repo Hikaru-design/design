@@ -47,6 +47,7 @@ import {
   deleteCard as localDeleteCard,
 } from "@/lib/storage";
 import { Plus, ChevronLeft, ChevronRight, LogOut, UserPlus } from "lucide-react";
+import { generateDemoTransactions } from "@/lib/demo-data";
 import { BottomNav } from "@/components/kakeibo/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,6 +106,11 @@ export default function Home() {
   // Load data when user changes or guest mode activates
   useEffect(() => {
     if (isGuest) {
+      const existing = localGetTransactions();
+      if (existing.length === 0) {
+        const demo = generateDemoTransactions();
+        demo.forEach((tx) => localAddTransaction(tx));
+      }
       setTransactions(localGetTransactions());
       setCategories(localGetCategories());
       setCards(localGetCards());
