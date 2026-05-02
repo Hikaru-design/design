@@ -81,10 +81,14 @@ export default function Home() {
 
   // Auth state listener
   useEffect(() => {
+    const timer = setTimeout(() => setAuthLoading(false), 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timer);
       setUser(session?.user ?? null);
       setAuthLoading(false);
     }).catch(() => {
+      clearTimeout(timer);
       setAuthLoading(false);
     });
 
@@ -92,7 +96,10 @@ export default function Home() {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Load data when user changes or guest mode activates
